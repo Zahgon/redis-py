@@ -149,8 +149,7 @@ class ACLCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/acl-cat
         """
-        pieces: list[EncodableT] = [category] if category else []
-        return self.execute_command("ACL CAT", *pieces, **kwargs)
+        pass
 
     @overload
     def acl_dryrun(
@@ -170,7 +169,7 @@ class ACLCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/acl-dryrun
         """
-        return self.execute_command("ACL DRYRUN", username, *args, **kwargs)
+        pass
 
     @overload
     def acl_deluser(self: SyncClientProtocol, *username: str, **kwargs) -> int: ...
@@ -204,18 +203,7 @@ class ACLCommands(CommandsProtocol):
         the next multiple of 4.
         See: https://redis.io/commands/acl-genpass
         """
-        pieces = []
-        if bits is not None:
-            try:
-                b = int(bits)
-                if b < 0 or b > 4096:
-                    raise ValueError
-                pieces.append(b)
-            except ValueError:
-                raise DataError(
-                    "genpass optionally accepts a bits argument, between 0 and 4096."
-                )
-        return self.execute_command("ACL GENPASS", *pieces, **kwargs)
+        pass
 
     @overload
     def acl_getuser(
@@ -237,7 +225,7 @@ class ACLCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/acl-getuser
         """
-        return self.execute_command("ACL GETUSER", username, **kwargs)
+        pass
 
     @overload
     def acl_help(self: SyncClientProtocol, **kwargs) -> list[str]: ...
@@ -251,7 +239,7 @@ class ACLCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/acl-help
         """
-        return self.execute_command("ACL HELP", **kwargs)
+        pass
 
     @overload
     def acl_list(self: SyncClientProtocol, **kwargs) -> list[str]: ...
@@ -265,7 +253,7 @@ class ACLCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/acl-list
         """
-        return self.execute_command("ACL LIST", **kwargs)
+        pass
 
     @overload
     def acl_log(
@@ -287,13 +275,7 @@ class ACLCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/acl-log
         """
-        args = []
-        if count is not None:
-            if not isinstance(count, int):
-                raise DataError("ACL LOG count must be an integer")
-            args.append(count)
-
-        return self.execute_command("ACL LOG", *args, **kwargs)
+        pass
 
     @overload
     def acl_log_reset(self: SyncClientProtocol, **kwargs) -> bool: ...
@@ -308,8 +290,7 @@ class ACLCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/acl-log
         """
-        args = [b"RESET"]
-        return self.execute_command("ACL LOG", *args, **kwargs)
+        pass
 
     @overload
     def acl_load(self: SyncClientProtocol, **kwargs) -> bool: ...
@@ -326,7 +307,7 @@ class ACLCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/acl-load
         """
-        return self.execute_command("ACL LOAD", **kwargs)
+        pass
 
     @overload
     def acl_save(self: SyncClientProtocol, **kwargs) -> bool: ...
@@ -343,7 +324,7 @@ class ACLCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/acl-save
         """
-        return self.execute_command("ACL SAVE", **kwargs)
+        pass
 
     @overload
     def acl_setuser(
@@ -460,121 +441,7 @@ class ACLCommands(CommandsProtocol):
                              status will be kept and any new specified passwords or
                              hashed passwords will be applied on top.
         """
-        encoder = self.get_encoder()
-        pieces: List[EncodableT] = [username]
-
-        if reset:
-            pieces.append(b"reset")
-
-        if reset_keys:
-            pieces.append(b"resetkeys")
-
-        if reset_channels:
-            pieces.append(b"resetchannels")
-
-        if reset_passwords:
-            pieces.append(b"resetpass")
-
-        if enabled:
-            pieces.append(b"on")
-        else:
-            pieces.append(b"off")
-
-        if (passwords or hashed_passwords) and nopass:
-            raise DataError(
-                "Cannot set 'nopass' and supply 'passwords' or 'hashed_passwords'"
-            )
-
-        if passwords:
-            # as most users will have only one password, allow remove_passwords
-            # to be specified as a simple string or a list
-            passwords = list_or_args(passwords, [])
-            for i, password in enumerate(passwords):
-                password = encoder.encode(password)
-                if password.startswith(b"+"):
-                    pieces.append(b">%s" % password[1:])
-                elif password.startswith(b"-"):
-                    pieces.append(b"<%s" % password[1:])
-                else:
-                    raise DataError(
-                        f"Password {i} must be prefixed with a "
-                        f'"+" to add or a "-" to remove'
-                    )
-
-        if hashed_passwords:
-            # as most users will have only one password, allow remove_passwords
-            # to be specified as a simple string or a list
-            hashed_passwords = list_or_args(hashed_passwords, [])
-            for i, hashed_password in enumerate(hashed_passwords):
-                hashed_password = encoder.encode(hashed_password)
-                if hashed_password.startswith(b"+"):
-                    pieces.append(b"#%s" % hashed_password[1:])
-                elif hashed_password.startswith(b"-"):
-                    pieces.append(b"!%s" % hashed_password[1:])
-                else:
-                    raise DataError(
-                        f"Hashed password {i} must be prefixed with a "
-                        f'"+" to add or a "-" to remove'
-                    )
-
-        if nopass:
-            pieces.append(b"nopass")
-
-        if categories:
-            for category in categories:
-                category = encoder.encode(category)
-                # categories can be prefixed with one of (+@, +, -@, -)
-                if category.startswith(b"+@"):
-                    pieces.append(category)
-                elif category.startswith(b"+"):
-                    pieces.append(b"+@%s" % category[1:])
-                elif category.startswith(b"-@"):
-                    pieces.append(category)
-                elif category.startswith(b"-"):
-                    pieces.append(b"-@%s" % category[1:])
-                else:
-                    raise DataError(
-                        f'Category "{encoder.decode(category, force=True)}" '
-                        'must be prefixed with "+" or "-"'
-                    )
-        if commands:
-            for cmd in commands:
-                cmd = encoder.encode(cmd)
-                if not cmd.startswith(b"+") and not cmd.startswith(b"-"):
-                    raise DataError(
-                        f'Command "{encoder.decode(cmd, force=True)}" '
-                        'must be prefixed with "+" or "-"'
-                    )
-                pieces.append(cmd)
-
-        if keys:
-            for key in keys:
-                key = encoder.encode(key)
-                if not key.startswith(b"%") and not key.startswith(b"~"):
-                    key = b"~%s" % key
-                pieces.append(key)
-
-        if channels:
-            for channel in channels:
-                channel = encoder.encode(channel)
-                pieces.append(b"&%s" % channel)
-
-        if selectors:
-            for cmd, key in selectors:
-                cmd = encoder.encode(cmd)
-                if not cmd.startswith(b"+") and not cmd.startswith(b"-"):
-                    raise DataError(
-                        f'Command "{encoder.decode(cmd, force=True)}" '
-                        'must be prefixed with "+" or "-"'
-                    )
-
-                key = encoder.encode(key)
-                if not key.startswith(b"%") and not key.startswith(b"~"):
-                    key = b"~%s" % key
-
-                pieces.append(b"(%s %s)" % (cmd, key))
-
-        return self.execute_command("ACL SETUSER", *pieces, **kwargs)
+        pass
 
     @overload
     def acl_users(self: SyncClientProtocol, **kwargs) -> list[str]: ...
@@ -587,7 +454,7 @@ class ACLCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/acl-users
         """
-        return self.execute_command("ACL USERS", **kwargs)
+        pass
 
     @overload
     def acl_whoami(self: SyncClientProtocol, **kwargs) -> str: ...
@@ -600,7 +467,7 @@ class ACLCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/acl-whoami
         """
-        return self.execute_command("ACL WHOAMI", **kwargs)
+        pass
 
 
 AsyncACLCommands = ACLCommands
@@ -662,7 +529,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/bgrewriteaof
         """
-        return self.execute_command("BGREWRITEAOF", **kwargs)
+        pass
 
     @overload
     def bgsave(
@@ -683,10 +550,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/bgsave
         """
-        pieces = []
-        if schedule:
-            pieces.append("SCHEDULE")
-        return self.execute_command("BGSAVE", *pieces, **kwargs)
+        pass
 
     @overload
     def role(self: SyncClientProtocol) -> list[Any]: ...
@@ -702,7 +566,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/role
         """
-        return self.execute_command("ROLE")
+        pass
 
     @overload
     def client_kill(self: SyncClientProtocol, address: str, **kwargs) -> bool | int: ...
@@ -719,7 +583,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/client-kill
         """
-        return self.execute_command("CLIENT KILL", address, **kwargs)
+        pass
 
     @overload
     def client_kill_filter(
@@ -771,35 +635,7 @@ class ManagementCommands(CommandsProtocol):
         :param user: Kills a client for a specific user name
         :param maxage: Kills clients that are older than the specified age in seconds
         """
-        args = []
-        if _type is not None:
-            client_types = ("normal", "master", "slave", "pubsub")
-            if str(_type).lower() not in client_types:
-                raise DataError(f"CLIENT KILL type must be one of {client_types!r}")
-            args.extend((b"TYPE", _type))
-        if skipme is not None:
-            if not isinstance(skipme, bool):
-                raise DataError("CLIENT KILL skipme must be a bool")
-            if skipme:
-                args.extend((b"SKIPME", b"YES"))
-            else:
-                args.extend((b"SKIPME", b"NO"))
-        if _id is not None:
-            args.extend((b"ID", _id))
-        if addr is not None:
-            args.extend((b"ADDR", addr))
-        if laddr is not None:
-            args.extend((b"LADDR", laddr))
-        if user is not None:
-            args.extend((b"USER", user))
-        if maxage is not None:
-            args.extend((b"MAXAGE", maxage))
-        if not args:
-            raise DataError(
-                "CLIENT KILL <filter> <value> ... ... <filter> "
-                "<value> must specify at least one filter"
-            )
-        return self.execute_command("CLIENT KILL", *args, **kwargs)
+        pass
 
     @overload
     def client_info(self: SyncClientProtocol, **kwargs) -> dict[str, str | int]: ...
@@ -818,7 +654,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/client-info
         """
-        return self.execute_command("CLIENT INFO", **kwargs)
+        pass
 
     @overload
     def client_list(
@@ -849,19 +685,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/client-list
         """
-        args = []
-        if _type is not None:
-            client_types = ("normal", "master", "replica", "pubsub")
-            if str(_type).lower() not in client_types:
-                raise DataError(f"CLIENT LIST _type must be one of {client_types!r}")
-            args.append(b"TYPE")
-            args.append(_type)
-        if not isinstance(client_id, list):
-            raise DataError("client_id must be a list")
-        if client_id:
-            args.append(b"ID")
-            args += client_id
-        return self.execute_command("CLIENT LIST", *args, **kwargs)
+        pass
 
     @overload
     def client_getname(self: SyncClientProtocol, **kwargs) -> str | None: ...
@@ -877,7 +701,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/client-getname
         """
-        return self.execute_command("CLIENT GETNAME", **kwargs)
+        pass
 
     @overload
     def client_getredir(self: SyncClientProtocol, **kwargs) -> int: ...
@@ -892,7 +716,7 @@ class ManagementCommands(CommandsProtocol):
 
         see: https://redis.io/commands/client-getredir
         """
-        return self.execute_command("CLIENT GETREDIR", **kwargs)
+        pass
 
     @overload
     def client_reply(
@@ -927,10 +751,7 @@ class ManagementCommands(CommandsProtocol):
 
         See https://redis.io/commands/client-reply
         """
-        replies = ["ON", "OFF", "SKIP"]
-        if reply not in replies:
-            raise DataError(f"CLIENT REPLY must be one of {replies!r}")
-        return self.execute_command("CLIENT REPLY", reply, **kwargs)
+        pass
 
     @overload
     def client_id(self: SyncClientProtocol, **kwargs) -> int: ...
@@ -944,7 +765,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/client-id
         """
-        return self.execute_command("CLIENT ID", **kwargs)
+        pass
 
     @overload
     def client_tracking_on(
@@ -983,9 +804,7 @@ class ManagementCommands(CommandsProtocol):
 
         See https://redis.io/commands/client-tracking
         """
-        return self.client_tracking(
-            True, clientid, prefix, bcast, optin, optout, noloop
-        )
+        pass
 
     @overload
     def client_tracking_off(
@@ -1024,9 +843,7 @@ class ManagementCommands(CommandsProtocol):
 
         See https://redis.io/commands/client-tracking
         """
-        return self.client_tracking(
-            False, clientid, prefix, bcast, optin, optout, noloop
-        )
+        pass
 
     @overload
     def client_tracking(
@@ -1094,25 +911,7 @@ class ManagementCommands(CommandsProtocol):
 
         See https://redis.io/commands/client-tracking
         """
-
-        if len(prefix) != 0 and bcast is False:
-            raise DataError("Prefix can only be used with bcast")
-
-        pieces = ["ON"] if on else ["OFF"]
-        if clientid is not None:
-            pieces.extend(["REDIRECT", clientid])
-        for p in prefix:
-            pieces.extend(["PREFIX", p])
-        if bcast:
-            pieces.append("BCAST")
-        if optin:
-            pieces.append("OPTIN")
-        if optout:
-            pieces.append("OPTOUT")
-        if noloop:
-            pieces.append("NOLOOP")
-
-        return self.execute_command("CLIENT TRACKING", *pieces, **kwargs)
+        pass
 
     @overload
     def client_trackinginfo(self: SyncClientProtocol, **kwargs) -> dict[str, Any]: ...
@@ -1131,7 +930,7 @@ class ManagementCommands(CommandsProtocol):
 
         See https://redis.io/commands/client-trackinginfo
         """
-        return self.execute_command("CLIENT TRACKINGINFO", **kwargs)
+        pass
 
     @overload
     def client_setname(self: SyncClientProtocol, name: str, **kwargs) -> bool: ...
@@ -1153,7 +952,7 @@ class ManagementCommands(CommandsProtocol):
            If you want to set a common name for all connections managed
            by this client, use ``client_name`` constructor argument.
         """
-        return self.execute_command("CLIENT SETNAME", name, **kwargs)
+        pass
 
     @overload
     def client_setinfo(
@@ -1170,7 +969,7 @@ class ManagementCommands(CommandsProtocol):
         Sets the current connection library name or version
         For mor information see https://redis.io/commands/client-setinfo
         """
-        return self.execute_command("CLIENT SETINFO", attr, value, **kwargs)
+        pass
 
     @overload
     def client_unblock(
@@ -1193,10 +992,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/client-unblock
         """
-        args = ["CLIENT UNBLOCK", int(client_id)]
-        if error:
-            args.append(b"ERROR")
-        return self.execute_command(*args, **kwargs)
+        pass
 
     @overload
     def client_pause(
@@ -1231,12 +1027,7 @@ class ManagementCommands(CommandsProtocol):
         * WAIT: Acknowledgments will be delayed, so this command will
             appear blocked.
         """
-        args = ["CLIENT PAUSE", str(timeout)]
-        if not isinstance(timeout, int):
-            raise DataError("CLIENT PAUSE timeout must be an integer")
-        if not all:
-            args.append("WRITE")
-        return self.execute_command(*args, **kwargs)
+        pass
 
     @overload
     def client_unpause(self: SyncClientProtocol, **kwargs) -> bytes | str: ...
@@ -1252,7 +1043,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/client-unpause
         """
-        return self.execute_command("CLIENT UNPAUSE", **kwargs)
+        pass
 
     @overload
     def client_no_evict(self: SyncClientProtocol, mode: str) -> bytes | str: ...
@@ -1268,7 +1059,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/client-no-evict
         """
-        return self.execute_command("CLIENT NO-EVICT", mode)
+        pass
 
     @overload
     def client_no_touch(self: SyncClientProtocol, mode: str) -> bytes | str: ...
@@ -1287,7 +1078,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/client-no-touch
         """
-        return self.execute_command("CLIENT NO-TOUCH", mode)
+        pass
 
     @overload
     def command(self: SyncClientProtocol, **kwargs) -> dict[str, dict[str, Any]]: ...
@@ -1319,7 +1110,7 @@ class ManagementCommands(CommandsProtocol):
     def command_count(self: AsyncClientProtocol, **kwargs) -> Awaitable[int]: ...
 
     def command_count(self, **kwargs) -> int | Awaitable[int]:
-        return self.execute_command("COMMAND COUNT", **kwargs)
+        pass
 
     @overload
     def command_list(
@@ -1352,18 +1143,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/command-list/
         """
-        pieces = []
-        if module is not None:
-            pieces.extend(["MODULE", module])
-        if category is not None:
-            pieces.extend(["ACLCAT", category])
-        if pattern is not None:
-            pieces.extend(["PATTERN", pattern])
-
-        if pieces:
-            pieces.insert(0, "FILTERBY")
-
-        return self.execute_command("COMMAND LIST", *pieces)
+        pass
 
     @overload
     def command_getkeysandflags(
@@ -1383,7 +1163,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/command-getkeysandflags
         """
-        return self.execute_command("COMMAND GETKEYSANDFLAGS", *args)
+        pass
 
     def command_docs(self, *args):
         """
@@ -1412,7 +1192,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/config-get
         """
-        return self.execute_command("CONFIG GET", pattern, *args, **kwargs)
+        pass
 
     @overload
     def config_set(
@@ -1457,7 +1237,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/config-resetstat
         """
-        return self.execute_command("CONFIG RESETSTAT", **kwargs)
+        pass
 
     @overload
     def config_rewrite(self: SyncClientProtocol, **kwargs) -> bytes | str: ...
@@ -1473,7 +1253,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/config-rewrite
         """
-        return self.execute_command("CONFIG REWRITE", **kwargs)
+        pass
 
     @overload
     def dbsize(self: SyncClientProtocol, **kwargs) -> int: ...
@@ -1487,7 +1267,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/dbsize
         """
-        return self.execute_command("DBSIZE", **kwargs)
+        pass
 
     @overload
     def debug_object(
@@ -1507,7 +1287,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/debug-object
         """
-        return self.execute_command("DEBUG OBJECT", key, **kwargs)
+        pass
 
     def debug_segfault(self, **kwargs) -> None:
         raise NotImplementedError(
@@ -1534,7 +1314,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/echo
         """
-        return self.execute_command("ECHO", value, **kwargs)
+        pass
 
     @overload
     def flushall(
@@ -1596,11 +1376,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/sync
         """
-        from redis.client import NEVER_DECODE
-
-        options = {}
-        options[NEVER_DECODE] = []
-        return self.execute_command("SYNC", **options)
+        pass
 
     @overload
     def psync(self: SyncClientProtocol, replicationid: str, offset: int) -> bytes: ...
@@ -1617,11 +1393,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/sync
         """
-        from redis.client import NEVER_DECODE
-
-        options = {}
-        options[NEVER_DECODE] = []
-        return self.execute_command("PSYNC", replicationid, offset, **options)
+        pass
 
     @overload
     def swapdb(self: SyncClientProtocol, first: int, second: int, **kwargs) -> bool: ...
@@ -1637,7 +1409,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/swapdb
         """
-        return self.execute_command("SWAPDB", first, second, **kwargs)
+        pass
 
     @overload
     def select(self: SyncClientProtocol, index: int, **kwargs) -> bool: ...
@@ -1702,7 +1474,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/lastsave
         """
-        return self.execute_command("LASTSAVE", **kwargs)
+        pass
 
     def latency_doctor(self):
         """Raise a NotImplementedError, as the client will not support LATENCY DOCTOR.
@@ -1750,10 +1522,7 @@ class ManagementCommands(CommandsProtocol):
 
         See: https://redis.io/commands/lolwut
         """
-        if version_numbers:
-            return self.execute_command("LOLWUT VERSION", *version_numbers, **kwargs)
-        else:
-            return self.execute_command("LOLWUT", **kwargs)
+        pass
 
     @overload
     def reset(self: SyncClientProtocol) -> str: ...
@@ -1827,22 +1596,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/migrate
         """
-        keys = list_or_args(keys, [])
-        if not keys:
-            raise DataError("MIGRATE requires at least one key")
-        pieces = []
-        if copy:
-            pieces.append(b"COPY")
-        if replace:
-            pieces.append(b"REPLACE")
-        if auth:
-            pieces.append(b"AUTH")
-            pieces.append(auth)
-        pieces.append(b"KEYS")
-        pieces.extend(keys)
-        return self.execute_command(
-            "MIGRATE", host, port, "", destination_db, timeout, *pieces, **kwargs
-        )
+        pass
 
     @overload
     def object(self: SyncClientProtocol, infotype: str, key: KeyT, **kwargs) -> Any: ...
@@ -1856,9 +1610,7 @@ class ManagementCommands(CommandsProtocol):
         """
         Return the encoding, idletime, or refcount about the key
         """
-        return self.execute_command(
-            "OBJECT", infotype, key, infotype=infotype, **kwargs
-        )
+        pass
 
     def memory_doctor(self, **kwargs) -> None:
         raise NotImplementedError(
@@ -1892,7 +1644,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/memory-stats
         """
-        return self.execute_command("MEMORY STATS", **kwargs)
+        pass
 
     @overload
     def memory_malloc_stats(self: SyncClientProtocol, **kwargs) -> bytes | str: ...
@@ -1908,7 +1660,7 @@ class ManagementCommands(CommandsProtocol):
 
         See: https://redis.io/commands/memory-malloc-stats
         """
-        return self.execute_command("MEMORY MALLOC-STATS", **kwargs)
+        pass
 
     @overload
     def memory_usage(
@@ -1933,10 +1685,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/memory-usage
         """
-        args = []
-        if isinstance(samples, int):
-            args.extend([b"SAMPLES", samples])
-        return self.execute_command("MEMORY USAGE", key, *args, **kwargs)
+        pass
 
     @overload
     def memory_purge(self: SyncClientProtocol, **kwargs) -> bool: ...
@@ -1950,7 +1699,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/memory-purge
         """
-        return self.execute_command("MEMORY PURGE", **kwargs)
+        pass
 
     def latency_histogram(self, *args):
         """
@@ -1977,7 +1726,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/latency-history
         """
-        return self.execute_command("LATENCY HISTORY", event)
+        pass
 
     @overload
     def latency_latest(self: SyncClientProtocol) -> list[list[bytes | str | int]]: ...
@@ -1995,7 +1744,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/latency-latest
         """
-        return self.execute_command("LATENCY LATEST")
+        pass
 
     @overload
     def latency_reset(self: SyncClientProtocol, *events: str) -> int: ...
@@ -2009,7 +1758,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/latency-reset
         """
-        return self.execute_command("LATENCY RESET", *events)
+        pass
 
     @overload
     def ping(self: SyncClientProtocol, **kwargs) -> bool: ...
@@ -2044,7 +1793,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/quit
         """
-        return self.execute_command("QUIT", **kwargs)
+        pass
 
     @overload
     def replicaof(self: SyncClientProtocol, *args, **kwargs) -> bytes | str: ...
@@ -2065,7 +1814,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see  https://redis.io/commands/replicaof
         """
-        return self.execute_command("REPLICAOF", *args, **kwargs)
+        pass
 
     @overload
     def save(self: SyncClientProtocol, **kwargs) -> bool: ...
@@ -2080,7 +1829,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/save
         """
-        return self.execute_command("SAVE", **kwargs)
+        pass
 
     def shutdown(
         self,
@@ -2150,9 +1899,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/slaveof
         """
-        if host is None and port is None:
-            return self.execute_command("SLAVEOF", b"NO", b"ONE", **kwargs)
-        return self.execute_command("SLAVEOF", host, port, **kwargs)
+        pass
 
     @overload
     def slowlog_get(
@@ -2173,15 +1920,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/slowlog-get
         """
-        from redis.client import NEVER_DECODE
-
-        args = ["SLOWLOG GET"]
-        if num is not None:
-            args.append(num)
-        decode_responses = self.get_connection_kwargs().get("decode_responses", False)
-        if decode_responses is True:
-            kwargs[NEVER_DECODE] = []
-        return self.execute_command(*args, **kwargs)
+        pass
 
     @overload
     def slowlog_len(self: SyncClientProtocol, **kwargs) -> int: ...
@@ -2195,7 +1934,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/slowlog-len
         """
-        return self.execute_command("SLOWLOG LEN", **kwargs)
+        pass
 
     @overload
     def slowlog_reset(self: SyncClientProtocol, **kwargs) -> bool: ...
@@ -2209,7 +1948,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/slowlog-reset
         """
-        return self.execute_command("SLOWLOG RESET", **kwargs)
+        pass
 
     @overload
     def time(self: SyncClientProtocol, **kwargs) -> tuple[int, int]: ...
@@ -2276,9 +2015,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/waitaof
         """
-        return self.execute_command(
-            "WAITAOF", num_local, num_replicas, timeout, **kwargs
-        )
+        pass
 
     def hello(self):
         """
@@ -2342,31 +2079,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hotkeys-start
         """
-        args: List[Union[str, int]] = ["HOTKEYS", "START"]
-
-        # Add METRICS
-        args.extend(["METRICS", len(metrics)])
-        args.extend([str(m.value) for m in metrics])
-
-        # Add COUNT
-        if count is not None:
-            args.extend(["COUNT", count])
-
-        # Add optional DURATION
-        if duration is not None:
-            args.extend(["DURATION", duration])
-
-        # Add optional SAMPLE ratio
-        if sample_ratio is not None:
-            args.extend(["SAMPLE", sample_ratio])
-
-        # Add optional SLOTS
-        if slots is not None:
-            args.append("SLOTS")
-            args.append(len(slots))
-            args.extend(slots)
-
-        return self.execute_command(*args, **kwargs)
+        pass
 
     @overload
     def hotkeys_stop(self: SyncClientProtocol, **kwargs) -> bytes | str: ...
@@ -2381,7 +2094,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hotkeys-stop
         """
-        return self.execute_command("HOTKEYS STOP", **kwargs)
+        pass
 
     @overload
     def hotkeys_reset(self: SyncClientProtocol, **kwargs) -> bytes | str: ...
@@ -2398,7 +2111,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hotkeys-reset
         """
-        return self.execute_command("HOTKEYS RESET", **kwargs)
+        pass
 
     @overload
     def hotkeys_get(
@@ -2426,7 +2139,7 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hotkeys-get
         """
-        return self.execute_command("HOTKEYS GET", **kwargs)
+        pass
 
     @overload
     def gcra(
@@ -2484,32 +2197,21 @@ class ManagementCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/gcra
         """
-        if max_burst < 0:
-            raise DataError("GCRA max_burst must be >= 0")
-        if tokens_per_period < 1:
-            raise DataError("GCRA tokens_per_period must be >= 1")
-        if period < 1.0 or period > 1e12:
-            raise DataError("GCRA period must be between 1.0 and 1e12")
-
-        pieces: list[EncodableT] = [key, max_burst, tokens_per_period, period]
-        if tokens is not None:
-            pieces.extend(["TOKENS", tokens])
-
-        return self.execute_command("GCRA", *pieces)
+        pass
 
 
 class AsyncManagementCommands(ManagementCommands):
     async def command_info(self, **kwargs) -> None:
-        return super().command_info(**kwargs)
+        pass
 
     async def debug_segfault(self, **kwargs) -> None:
-        return super().debug_segfault(**kwargs)
+        pass
 
     async def memory_doctor(self, **kwargs) -> None:
-        return super().memory_doctor(**kwargs)
+        pass
 
     async def memory_help(self, **kwargs) -> None:
-        return super().memory_help(**kwargs)
+        pass
 
     async def shutdown(
         self,
@@ -2609,11 +2311,7 @@ class BitFieldOperation:
             descriptions of these algorithms.
         :returns: a :py:class:`BitFieldOperation` instance.
         """
-        if overflow is not None:
-            self.overflow(overflow)
-
-        self.operations.append(("INCRBY", fmt, offset, increment))
-        return self
+        pass
 
     def get(self, fmt: str, offset: BitfieldOffsetT):
         """
@@ -2639,8 +2337,7 @@ class BitFieldOperation:
         :param int value: value to set at the given position.
         :returns: a :py:class:`BitFieldOperation` instance.
         """
-        self.operations.append(("SET", fmt, offset, value))
-        return self
+        pass
 
     @property
     def command(self):
@@ -2725,15 +2422,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/bitcount
         """
-        params = [key]
-        if start is not None and end is not None:
-            params.append(start)
-            params.append(end)
-        elif (start is not None and end is None) or (end is not None and start is None):
-            raise DataError("Both start and end must be specified")
-        if mode is not None:
-            params.append(mode)
-        return self.execute_command("BITCOUNT", *params, keys=[key])
+        pass
 
     def bitfield(
         self: Union["redis.client.Redis", "redis.asyncio.client.Redis"],
@@ -2746,7 +2435,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/bitfield
         """
-        return BitFieldOperation(self, key, default_overflow=default_overflow)
+        pass
 
     @overload
     def bitfield_ro(
@@ -2782,12 +2471,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/bitfield_ro
         """
-        params = [key, "GET", encoding, offset]
-
-        items = items or []
-        for encoding, offset in items:
-            params.extend(["GET", encoding, offset])
-        return self.execute_command("BITFIELD_RO", *params, keys=[key])
+        pass
 
     @overload
     def bitop(
@@ -2806,7 +2490,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/bitop
         """
-        return self.execute_command("BITOP", operation, dest, *keys)
+        pass
 
     @overload
     def bitpos(
@@ -2844,20 +2528,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/bitpos
         """
-        if bit not in (0, 1):
-            raise DataError("bit must be 0 or 1")
-        params = [key, bit]
-
-        start is not None and params.append(start)
-
-        if start is not None and end is not None:
-            params.append(end)
-        elif start is None and end is not None:
-            raise DataError("start argument is not set, when end is specified")
-
-        if mode is not None:
-            params.append(mode)
-        return self.execute_command("BITPOS", *params, keys=[key])
+        pass
 
     @overload
     def copy(
@@ -2918,7 +2589,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/decrby
         """
-        return self.execute_command("DECRBY", name, amount)
+        pass
 
     decr = decrby
 
@@ -2992,21 +2663,7 @@ class BasicKeyCommands(CommandsProtocol):
         Requires Redis 8.4 or greater.
         For more information, see https://redis.io/commands/delex
         """
-        conds = [x is not None for x in (ifeq, ifne, ifdeq, ifdne)]
-        if sum(conds) > 1:
-            raise ValueError("Only one of IFEQ/IFNE/IFDEQ/IFDNE may be specified")
-
-        pieces = ["DELEX", name]
-        if ifeq is not None:
-            pieces += ["IFEQ", ifeq]
-        elif ifne is not None:
-            pieces += ["IFNE", ifne]
-        elif ifdeq is not None:
-            pieces += ["IFDEQ", ifdeq]
-        elif ifdne is not None:
-            pieces += ["IFDNE", ifdne]
-
-        return self.execute_command(*pieces)
+        pass
 
     @overload
     def dump(self: SyncClientProtocol, name: KeyT) -> bytes | None: ...
@@ -3021,11 +2678,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/dump
         """
-        from redis.client import NEVER_DECODE
-
-        options = {}
-        options[NEVER_DECODE] = []
-        return self.execute_command("DUMP", name, **options)
+        pass
 
     @overload
     def exists(self: SyncClientProtocol, *names: KeyT) -> int: ...
@@ -3087,20 +2740,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/expire
         """
-        if isinstance(time, datetime.timedelta):
-            time = int(time.total_seconds())
-
-        exp_option = list()
-        if nx:
-            exp_option.append("NX")
-        if xx:
-            exp_option.append("XX")
-        if gt:
-            exp_option.append("GT")
-        if lt:
-            exp_option.append("LT")
-
-        return self.execute_command("EXPIRE", name, time, *exp_option)
+        pass
 
     @overload
     def expireat(
@@ -3146,20 +2786,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/expireat
         """
-        if isinstance(when, datetime.datetime):
-            when = int(when.timestamp())
-
-        exp_option = list()
-        if nx:
-            exp_option.append("NX")
-        if xx:
-            exp_option.append("XX")
-        if gt:
-            exp_option.append("GT")
-        if lt:
-            exp_option.append("LT")
-
-        return self.execute_command("EXPIREAT", name, when, *exp_option)
+        pass
 
     @overload
     def expiretime(self: SyncClientProtocol, key: str) -> int: ...
@@ -3174,7 +2801,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/expiretime
         """
-        return self.execute_command("EXPIRETIME", key)
+        pass
 
     @experimental_method()
     def digest_local(self, value: bytes | str) -> bytes | str:
@@ -3198,21 +2825,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/digest
         """
-        if not HAS_XXHASH:
-            raise NotImplementedError(
-                "XXHASH support requires the optional 'xxhash' library. "
-                "Install it with 'pip install xxhash' or use this package's extra with "
-                "'pip install redis[xxhash]' to enable this feature."
-            )
-
-        local_digest = xxhash.xxh3_64(value).hexdigest()
-
-        # To align with digest, we want to return bytes if decode_responses is False.
-        # The following works because of Python's mixin-based client class hierarchy.
-        if not self.get_encoder().decode_responses:
-            local_digest = local_digest.encode()
-
-        return local_digest
+        pass
 
     @overload
     def digest(self: SyncClientProtocol, name: KeyT) -> str | bytes | None: ...
@@ -3247,8 +2860,7 @@ class BasicKeyCommands(CommandsProtocol):
         Requires Redis 8.4 or greater.
         For more information, see https://redis.io/commands/digest
         """
-        # Bulk string response is already handled (bytes/str based on decode_responses)
-        return self.execute_command("DIGEST", name)
+        pass
 
     @overload
     def get(self: SyncClientProtocol, name: KeyT) -> bytes | str | None: ...
@@ -3283,7 +2895,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/getdel
         """
-        return self.execute_command("GETDEL", name)
+        pass
 
     @overload
     def getex(
@@ -3336,18 +2948,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/getex
         """
-        if not at_most_one_value_set((ex, px, exat, pxat, persist)):
-            raise DataError(
-                "``ex``, ``px``, ``exat``, ``pxat``, "
-                "and ``persist`` are mutually exclusive."
-            )
-
-        exp_options: list[EncodableT] = extract_expire_flags(ex, px, exat, pxat)
-
-        if persist:
-            exp_options.append("PERSIST")
-
-        return self.execute_command("GETEX", name, *exp_options)
+        pass
 
     def __getitem__(self, name: KeyT):
         """
@@ -3373,7 +2974,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/getbit
         """
-        return self.execute_command("GETBIT", name, offset, keys=[name])
+        pass
 
     @overload
     def getrange(
@@ -3394,7 +2995,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/getrange
         """
-        return self.execute_command("GETRANGE", key, start, end, keys=[key])
+        pass
 
     @overload
     def getset(
@@ -3418,7 +3019,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/getset
         """
-        return self.execute_command("GETSET", name, value)
+        pass
 
     @overload
     def incrby(self: SyncClientProtocol, name: KeyT, amount: int = 1) -> int: ...
@@ -3435,7 +3036,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/incrby
         """
-        return self.execute_command("INCRBY", name, amount)
+        pass
 
     incr = incrby
 
@@ -3456,7 +3057,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/incrbyfloat
         """
-        return self.execute_command("INCRBYFLOAT", name, amount)
+        pass
 
     @overload
     def keys(
@@ -3506,8 +3107,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/lmove
         """
-        params = [first_list, second_list, src, dest]
-        return self.execute_command("LMOVE", *params)
+        pass
 
     @overload
     def blmove(
@@ -3542,8 +3142,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/blmove
         """
-        params = [first_list, second_list, src, dest, timeout]
-        return self.execute_command("BLMOVE", *params)
+        pass
 
     @overload
     def mget(
@@ -3567,14 +3166,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/mget
         """
-        from redis.client import EMPTY_RESPONSE
-
-        args = list_or_args(keys, args)
-        options = {}
-        if not args:
-            options[EMPTY_RESPONSE] = []
-        options["keys"] = args
-        return self.execute_command("MGET", *args, **options)
+        pass
 
     @overload
     def mset(
@@ -3598,10 +3190,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/mset
         """
-        items = []
-        for pair in mapping.items():
-            items.extend(pair)
-        return self.execute_command("MSET", *items)
+        pass
 
     @overload
     def msetex(
@@ -3670,27 +3259,7 @@ class BasicKeyCommands(CommandsProtocol):
         Available since Redis 8.4
         For more information, see https://redis.io/commands/msetex
         """
-        if not at_most_one_value_set((ex, px, exat, pxat, keepttl)):
-            raise DataError(
-                "``ex``, ``px``, ``exat``, ``pxat``, "
-                "and ``keepttl`` are mutually exclusive."
-            )
-
-        exp_options: list[EncodableT] = []
-        if data_persist_option:
-            exp_options.append(data_persist_option.value)
-
-        exp_options.extend(extract_expire_flags(ex, px, exat, pxat))
-
-        if keepttl:
-            exp_options.append("KEEPTTL")
-
-        pieces = ["MSETEX", len(mapping)]
-
-        for pair in mapping.items():
-            pieces.extend(pair)
-
-        return self.execute_command(*pieces, *exp_options)
+        pass
 
     @overload
     def msetnx(
@@ -3715,10 +3284,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/msetnx
         """
-        items = []
-        for pair in mapping.items():
-            items.extend(pair)
-        return self.execute_command("MSETNX", *items)
+        pass
 
     @overload
     def move(self: SyncClientProtocol, name: KeyT, db: int) -> bool: ...
@@ -3732,7 +3298,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/move
         """
-        return self.execute_command("MOVE", name, db)
+        pass
 
     @overload
     def persist(self: SyncClientProtocol, name: KeyT) -> bool: ...
@@ -3746,7 +3312,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/persist
         """
-        return self.execute_command("PERSIST", name)
+        pass
 
     @overload
     def pexpire(
@@ -3792,19 +3358,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/pexpire
         """
-        if isinstance(time, datetime.timedelta):
-            time = int(time.total_seconds() * 1000)
-
-        exp_option = list()
-        if nx:
-            exp_option.append("NX")
-        if xx:
-            exp_option.append("XX")
-        if gt:
-            exp_option.append("GT")
-        if lt:
-            exp_option.append("LT")
-        return self.execute_command("PEXPIRE", name, time, *exp_option)
+        pass
 
     @overload
     def pexpireat(
@@ -3850,18 +3404,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/pexpireat
         """
-        if isinstance(when, datetime.datetime):
-            when = int(when.timestamp() * 1000)
-        exp_option = list()
-        if nx:
-            exp_option.append("NX")
-        if xx:
-            exp_option.append("XX")
-        if gt:
-            exp_option.append("GT")
-        if lt:
-            exp_option.append("LT")
-        return self.execute_command("PEXPIREAT", name, when, *exp_option)
+        pass
 
     @overload
     def pexpiretime(self: SyncClientProtocol, key: str) -> int: ...
@@ -3876,7 +3419,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/pexpiretime
         """
-        return self.execute_command("PEXPIRETIME", key)
+        pass
 
     @overload
     def psetex(
@@ -3898,9 +3441,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/psetex
         """
-        if isinstance(time_ms, datetime.timedelta):
-            time_ms = int(time_ms.total_seconds() * 1000)
-        return self.execute_command("PSETEX", name, time_ms, value)
+        pass
 
     @overload
     def pttl(self: SyncClientProtocol, name: KeyT) -> int: ...
@@ -3914,7 +3455,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/pttl
         """
-        return self.execute_command("PTTL", name)
+        pass
 
     @overload
     def hrandfield(
@@ -3948,13 +3489,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hrandfield
         """
-        params = []
-        if count is not None:
-            params.append(count)
-        if withvalues:
-            params.append("WITHVALUES")
-
-        return self.execute_command("HRANDFIELD", key, *params, withvalues=withvalues)
+        pass
 
     @overload
     def randomkey(self: SyncClientProtocol, **kwargs) -> bytes | str | None: ...
@@ -3972,7 +3507,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/randomkey
         """
-        return self.execute_command("RANDOMKEY", **kwargs)
+        pass
 
     @overload
     def rename(self: SyncClientProtocol, src: KeyT, dst: KeyT) -> bool: ...
@@ -3986,7 +3521,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/rename
         """
-        return self.execute_command("RENAME", src, dst)
+        pass
 
     @overload
     def renamenx(self: SyncClientProtocol, src: KeyT, dst: KeyT) -> bool: ...
@@ -4002,7 +3537,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/renamenx
         """
-        return self.execute_command("RENAMENX", src, dst)
+        pass
 
     @overload
     def restore(
@@ -4057,26 +3592,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/restore
         """
-        params = [name, ttl, value]
-        if replace:
-            params.append("REPLACE")
-        if absttl:
-            params.append("ABSTTL")
-        if idletime is not None:
-            params.append("IDLETIME")
-            try:
-                params.append(int(idletime))
-            except ValueError:
-                raise DataError("idletimemust be an integer")
-
-        if frequency is not None:
-            params.append("FREQ")
-            try:
-                params.append(int(frequency))
-            except ValueError:
-                raise DataError("frequency must be an integer")
-
-        return self.execute_command("RESTORE", *params)
+        pass
 
     @overload
     def set(
@@ -4188,46 +3704,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/set
         """
-
-        if not at_most_one_value_set((ex, px, exat, pxat, keepttl)):
-            raise DataError(
-                "``ex``, ``px``, ``exat``, ``pxat``, "
-                "and ``keepttl`` are mutually exclusive."
-            )
-
-        # Enforce mutual exclusivity among all conditional switches.
-        if not at_most_one_value_set((nx, xx, ifeq, ifne, ifdeq, ifdne)):
-            raise DataError(
-                "``nx``, ``xx``, ``ifeq``, ``ifne``, ``ifdeq``, ``ifdne`` are mutually exclusive."
-            )
-
-        pieces: list[EncodableT] = [name, value]
-        options = {}
-
-        # Conditional modifier (exactly one at most)
-        if nx:
-            pieces.append("NX")
-        elif xx:
-            pieces.append("XX")
-        elif ifeq is not None:
-            pieces.extend(("IFEQ", ifeq))
-        elif ifne is not None:
-            pieces.extend(("IFNE", ifne))
-        elif ifdeq is not None:
-            pieces.extend(("IFDEQ", ifdeq))
-        elif ifdne is not None:
-            pieces.extend(("IFDNE", ifdne))
-
-        if get:
-            pieces.append("GET")
-            options["get"] = True
-
-        pieces.extend(extract_expire_flags(ex, px, exat, pxat))
-
-        if keepttl:
-            pieces.append("KEEPTTL")
-
-        return self.execute_command("SET", *pieces, **options)
+        pass
 
     def __setitem__(self, name: KeyT, value: EncodableT):
         self.set(name, value)
@@ -4249,8 +3726,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/setbit
         """
-        value = value and 1 or 0
-        return self.execute_command("SETBIT", name, offset, value)
+        pass
 
     @overload
     def setex(
@@ -4272,9 +3748,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/setex
         """
-        if isinstance(time, datetime.timedelta):
-            time = int(time.total_seconds())
-        return self.execute_command("SETEX", name, time, value)
+        pass
 
     @overload
     def setnx(self: SyncClientProtocol, name: KeyT, value: EncodableT) -> bool: ...
@@ -4290,7 +3764,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/setnx
         """
-        return self.execute_command("SETNX", name, value)
+        pass
 
     @overload
     def setrange(
@@ -4317,7 +3791,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/setrange
         """
-        return self.execute_command("SETRANGE", name, offset, value)
+        pass
 
     @overload
     def stralgo(
@@ -4378,38 +3852,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/stralgo
         """
-        # check validity
-        supported_algo = ["LCS"]
-        if algo not in supported_algo:
-            supported_algos_str = ", ".join(supported_algo)
-            raise DataError(f"The supported algorithms are: {supported_algos_str}")
-        if specific_argument not in ["keys", "strings"]:
-            raise DataError("specific_argument can be only keys or strings")
-        if len and idx:
-            raise DataError("len and idx cannot be provided together.")
-
-        pieces: list[EncodableT] = [algo, specific_argument.upper(), value1, value2]
-        if len:
-            pieces.append(b"LEN")
-        if idx:
-            pieces.append(b"IDX")
-        try:
-            int(minmatchlen)
-            pieces.extend([b"MINMATCHLEN", minmatchlen])
-        except TypeError:
-            pass
-        if withmatchlen:
-            pieces.append(b"WITHMATCHLEN")
-
-        return self.execute_command(
-            "STRALGO",
-            *pieces,
-            len=len,
-            idx=idx,
-            minmatchlen=minmatchlen,
-            withmatchlen=withmatchlen,
-            **kwargs,
-        )
+        pass
 
     @overload
     def strlen(self: SyncClientProtocol, name: KeyT) -> int: ...
@@ -4423,7 +3866,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/strlen
         """
-        return self.execute_command("STRLEN", name, keys=[name])
+        pass
 
     @overload
     def substr(
@@ -4442,7 +3885,7 @@ class BasicKeyCommands(CommandsProtocol):
         Return a substring of the string at key ``name``. ``start`` and ``end``
         are 0-based integers specifying the portion of the string to return.
         """
-        return self.execute_command("SUBSTR", name, start, end, keys=[name])
+        pass
 
     @overload
     def touch(self: SyncClientProtocol, *args: KeyT) -> int: ...
@@ -4485,7 +3928,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/type
         """
-        return self.execute_command("TYPE", name, keys=[name])
+        pass
 
     def watch(self, *names: KeyT) -> None:
         """
@@ -4501,7 +3944,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/unwatch
         """
-        warnings.warn(DeprecationWarning("Call UNWATCH from a Pipeline object"))
+        pass
 
     @overload
     def unlink(self: SyncClientProtocol, *names: KeyT) -> int: ...
@@ -4515,7 +3958,7 @@ class BasicKeyCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/unlink
         """
-        return self.execute_command("UNLINK", *names)
+        pass
 
     @overload
     def lcs(
@@ -4559,16 +4002,7 @@ class BasicKeyCommands(CommandsProtocol):
         If ``withmatchlen`` the length of the match also will be returned.
         For more information, see https://redis.io/commands/lcs
         """
-        pieces: list[str | int] = [key1, key2]
-        if len:
-            pieces.append("LEN")
-        if idx:
-            pieces.append("IDX")
-        if minmatchlen is not None and minmatchlen != 0:
-            pieces.extend(["MINMATCHLEN", minmatchlen])
-        if withmatchlen:
-            pieces.append("WITHMATCHLEN")
-        return self.execute_command("LCS", *pieces, keys=[key1, key2])
+        pass
 
 
 class AsyncBasicKeyCommands(BasicKeyCommands):
@@ -4588,7 +4022,7 @@ class AsyncBasicKeyCommands(BasicKeyCommands):
         return super().watch(*names)
 
     async def unwatch(self) -> None:
-        return super().unwatch()
+        pass
 
 
 class ListCommands(CommandsProtocol):
@@ -4622,11 +4056,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/blpop
         """
-        if timeout is None:
-            timeout = 0
-        keys = list_or_args(keys, None)
-        keys.append(timeout)
-        return self.execute_command("BLPOP", *keys)
+        pass
 
     @overload
     def brpop(
@@ -4653,11 +4083,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/brpop
         """
-        if timeout is None:
-            timeout = 0
-        keys = list_or_args(keys, None)
-        keys.append(timeout)
-        return self.execute_command("BRPOP", *keys)
+        pass
 
     @overload
     def brpoplpush(
@@ -4682,9 +4108,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/brpoplpush
         """
-        if timeout is None:
-            timeout = 0
-        return self.execute_command("BRPOPLPUSH", src, dst, timeout)
+        pass
 
     @overload
     def blmpop(
@@ -4723,9 +4147,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/blmpop
         """
-        cmd_args = [timeout, numkeys, *args, direction, "COUNT", count]
-
-        return self.execute_command("BLMPOP", *cmd_args)
+        pass
 
     @overload
     def lmpop(
@@ -4758,11 +4180,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/lmpop
         """
-        cmd_args = [num_keys] + list(args) + [direction]
-        if count != 1:
-            cmd_args.extend(["COUNT", count])
-
-        return self.execute_command("LMPOP", *cmd_args)
+        pass
 
     @overload
     def lindex(
@@ -4785,7 +4203,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/lindex
         """
-        return self.execute_command("LINDEX", name, index, keys=[name])
+        pass
 
     @overload
     def linsert(
@@ -4809,7 +4227,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/linsert
         """
-        return self.execute_command("LINSERT", name, where, refvalue, value)
+        pass
 
     @overload
     def llen(self: SyncClientProtocol, name: KeyT) -> int: ...
@@ -4823,7 +4241,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/llen
         """
-        return self.execute_command("LLEN", name, keys=[name])
+        pass
 
     @overload
     def lpop(
@@ -4890,7 +4308,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/lpushx
         """
-        return self.execute_command("LPUSHX", name, *values)
+        pass
 
     @overload
     def lrange(
@@ -4936,7 +4354,7 @@ class ListCommands(CommandsProtocol):
 
             For more information, see https://redis.io/commands/lrem
         """
-        return self.execute_command("LREM", name, count, value)
+        pass
 
     @overload
     def lset(self: SyncClientProtocol, name: KeyT, index: int, value: str) -> bool: ...
@@ -4952,7 +4370,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/lset
         """
-        return self.execute_command("LSET", name, index, value)
+        pass
 
     @overload
     def ltrim(self: SyncClientProtocol, name: KeyT, start: int, end: int) -> bool: ...
@@ -4972,7 +4390,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/ltrim
         """
-        return self.execute_command("LTRIM", name, start, end)
+        pass
 
     @overload
     def rpop(
@@ -5004,10 +4422,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/rpop
         """
-        if count is not None:
-            return self.execute_command("RPOP", name, count)
-        else:
-            return self.execute_command("RPOP", name)
+        pass
 
     @overload
     def rpoplpush(
@@ -5028,7 +4443,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/rpoplpush
         """
-        return self.execute_command("RPOPLPUSH", src, dst)
+        pass
 
     @overload
     def rpush(self: SyncClientProtocol, name: KeyT, *values: FieldT) -> int: ...
@@ -5044,7 +4459,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/rpush
         """
-        return self.execute_command("RPUSH", name, *values)
+        pass
 
     @overload
     def rpushx(self: SyncClientProtocol, name: KeyT, *values: str) -> int: ...
@@ -5060,7 +4475,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/rpushx
         """
-        return self.execute_command("RPUSHX", name, *values)
+        pass
 
     @overload
     def lpos(
@@ -5115,17 +4530,7 @@ class ListCommands(CommandsProtocol):
 
          For more information, see https://redis.io/commands/lpos
         """
-        pieces: list[EncodableT] = [name, value]
-        if rank is not None:
-            pieces.extend(["RANK", rank])
-
-        if count is not None:
-            pieces.extend(["COUNT", count])
-
-        if maxlen is not None:
-            pieces.extend(["MAXLEN", maxlen])
-
-        return self.execute_command("LPOS", *pieces, keys=[name])
+        pass
 
     @overload
     def sort(
@@ -5192,41 +4597,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/sort
         """
-        if (start is not None and num is None) or (num is not None and start is None):
-            raise DataError("``start`` and ``num`` must both be specified")
-
-        pieces: list[EncodableT] = [name]
-        if by is not None:
-            pieces.extend([b"BY", by])
-        if start is not None and num is not None:
-            pieces.extend([b"LIMIT", start, num])
-        if get is not None:
-            # If get is a string assume we want to get a single value.
-            # Otherwise assume it's an interable and we want to get multiple
-            # values. We can't just iterate blindly because strings are
-            # iterable.
-            if isinstance(get, (bytes, str)):
-                pieces.extend([b"GET", get])
-            else:
-                for g in get:
-                    pieces.extend([b"GET", g])
-        if desc:
-            pieces.append(b"DESC")
-        if alpha:
-            pieces.append(b"ALPHA")
-        if store is not None:
-            pieces.extend([b"STORE", store])
-        if groups:
-            if not get or isinstance(get, (bytes, str)) or len(get) < 2:
-                raise DataError(
-                    'when using "groups" the "get" argument '
-                    "must be specified and contain at least "
-                    "two keys"
-                )
-
-        options = {"groups": len(get) if groups else None}
-        options["keys"] = [name]
-        return self.execute_command("SORT", *pieces, **options)
+        pass
 
     @overload
     def sort_ro(
@@ -5281,9 +4652,7 @@ class ListCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/sort_ro
         """
-        return self.sort(
-            key, start=start, num=num, by=by, get=get, desc=desc, alpha=alpha
-        )
+        pass
 
 
 AsyncListCommands = ListCommands
@@ -5339,14 +4708,7 @@ class ScanCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/scan
         """
-        pieces: list[EncodableT] = [cursor]
-        if match is not None:
-            pieces.extend([b"MATCH", match])
-        if count is not None:
-            pieces.extend([b"COUNT", count])
-        if _type is not None:
-            pieces.extend([b"TYPE", _type])
-        return self.execute_command("SCAN", *pieces, **kwargs)
+        pass
 
     def scan_iter(
         self,
@@ -5369,12 +4731,7 @@ class ScanCommands(CommandsProtocol):
             HASH, LIST, SET, STREAM, STRING, ZSET
             Additionally, Redis modules can expose other types as well.
         """
-        cursor = "0"
-        while cursor != 0:
-            cursor, data = self.scan(
-                cursor=cursor, match=match, count=count, _type=_type, **kwargs
-            )
-            yield from data
+        pass
 
     @overload
     def sscan(
@@ -5411,12 +4768,7 @@ class ScanCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/sscan
         """
-        pieces: list[EncodableT] = [name, cursor]
-        if match is not None:
-            pieces.extend([b"MATCH", match])
-        if count is not None:
-            pieces.extend([b"COUNT", count])
-        return self.execute_command("SSCAN", *pieces)
+        pass
 
     def sscan_iter(
         self,
@@ -5432,10 +4784,7 @@ class ScanCommands(CommandsProtocol):
 
         ``count`` allows for hint the minimum number of returns
         """
-        cursor = "0"
-        while cursor != 0:
-            cursor, data = self.sscan(name, cursor=cursor, match=match, count=count)
-            yield from data
+        pass
 
     @overload
     def hscan(
@@ -5477,14 +4826,7 @@ class ScanCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hscan
         """
-        pieces: list[EncodableT] = [name, cursor]
-        if match is not None:
-            pieces.extend([b"MATCH", match])
-        if count is not None:
-            pieces.extend([b"COUNT", count])
-        if no_values is not None:
-            pieces.extend([b"NOVALUES"])
-        return self.execute_command("HSCAN", *pieces, no_values=no_values)
+        pass
 
     def hscan_iter(
         self,
@@ -5503,15 +4845,7 @@ class ScanCommands(CommandsProtocol):
 
         ``no_values`` indicates to return only the keys, without values
         """
-        cursor = "0"
-        while cursor != 0:
-            cursor, data = self.hscan(
-                name, cursor=cursor, match=match, count=count, no_values=no_values
-            )
-            if no_values:
-                yield from data
-            else:
-                yield from data.items()
+        pass
 
     @overload
     def zscan(
@@ -5553,13 +4887,7 @@ class ScanCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zscan
         """
-        pieces = [name, cursor]
-        if match is not None:
-            pieces.extend([b"MATCH", match])
-        if count is not None:
-            pieces.extend([b"COUNT", count])
-        options = {"score_cast_func": score_cast_func}
-        return self.execute_command("ZSCAN", *pieces, **options)
+        pass
 
     def zscan_iter(
         self,
@@ -5578,16 +4906,7 @@ class ScanCommands(CommandsProtocol):
 
         ``score_cast_func`` a callable used to cast the score return value
         """
-        cursor = "0"
-        while cursor != 0:
-            cursor, data = self.zscan(
-                name,
-                cursor=cursor,
-                match=match,
-                count=count,
-                score_cast_func=score_cast_func,
-            )
-            yield from data
+        pass
 
 
 class AsyncScanCommands(ScanCommands):
@@ -5612,13 +4931,7 @@ class AsyncScanCommands(ScanCommands):
             HASH, LIST, SET, STREAM, STRING, ZSET
             Additionally, Redis modules can expose other types as well.
         """
-        cursor = "0"
-        while cursor != 0:
-            cursor, data = await self.scan(
-                cursor=cursor, match=match, count=count, _type=_type, **kwargs
-            )
-            for d in data:
-                yield d
+        pass
 
     async def sscan_iter(
         self,
@@ -5634,13 +4947,7 @@ class AsyncScanCommands(ScanCommands):
 
         ``count`` allows for hint the minimum number of returns
         """
-        cursor = "0"
-        while cursor != 0:
-            cursor, data = await self.sscan(
-                name, cursor=cursor, match=match, count=count
-            )
-            for d in data:
-                yield d
+        pass
 
     async def hscan_iter(
         self,
@@ -5659,17 +4966,7 @@ class AsyncScanCommands(ScanCommands):
 
         ``no_values`` indicates to return only the keys, without values
         """
-        cursor = "0"
-        while cursor != 0:
-            cursor, data = await self.hscan(
-                name, cursor=cursor, match=match, count=count, no_values=no_values
-            )
-            if no_values:
-                for it in data:
-                    yield it
-            else:
-                for it in data.items():
-                    yield it
+        pass
 
     async def zscan_iter(
         self,
@@ -5688,17 +4985,7 @@ class AsyncScanCommands(ScanCommands):
 
         ``score_cast_func`` a callable used to cast the score return value
         """
-        cursor = "0"
-        while cursor != 0:
-            cursor, data = await self.zscan(
-                name,
-                cursor=cursor,
-                match=match,
-                count=count,
-                score_cast_func=score_cast_func,
-            )
-            for d in data:
-                yield d
+        pass
 
 
 class SetCommands(CommandsProtocol):
@@ -5721,7 +5008,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/sadd
         """
-        return self.execute_command("SADD", name, *values)
+        pass
 
     @overload
     def scard(self: SyncClientProtocol, name: KeyT) -> int: ...
@@ -5735,7 +5022,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/scard
         """
-        return self.execute_command("SCARD", name, keys=[name])
+        pass
 
     @overload
     def sdiff(
@@ -5755,8 +5042,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/sdiff
         """
-        args = list_or_args(keys, args)
-        return self.execute_command("SDIFF", *args, keys=args)
+        pass
 
     @overload
     def sdiffstore(
@@ -5775,8 +5061,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/sdiffstore
         """
-        args = list_or_args(keys, args)
-        return self.execute_command("SDIFFSTORE", dest, *args)
+        pass
 
     @overload
     def sinter(
@@ -5796,8 +5081,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/sinter
         """
-        args = list_or_args(keys, args)
-        return self.execute_command("SINTER", *args, keys=args)
+        pass
 
     @overload
     def sintercard(
@@ -5821,8 +5105,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/sintercard
         """
-        args = [numkeys, *keys, "LIMIT", limit]
-        return self.execute_command("SINTERCARD", *args, keys=keys)
+        pass
 
     @overload
     def sinterstore(
@@ -5841,8 +5124,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/sinterstore
         """
-        args = list_or_args(keys, args)
-        return self.execute_command("SINTERSTORE", dest, *args)
+        pass
 
     @overload
     def sismember(
@@ -5864,7 +5146,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/sismember
         """
-        return self.execute_command("SISMEMBER", name, value, keys=[name])
+        pass
 
     @overload
     def smembers(self: SyncClientProtocol, name: KeyT) -> set[bytes | str]: ...
@@ -5880,7 +5162,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/smembers
         """
-        return self.execute_command("SMEMBERS", name, keys=[name])
+        pass
 
     @overload
     def smismember(
@@ -5903,8 +5185,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/smismember
         """
-        args = list_or_args(values, args)
-        return self.execute_command("SMISMEMBER", name, *args, keys=[name])
+        pass
 
     @overload
     def smove(self: SyncClientProtocol, src: KeyT, dst: KeyT, value: str) -> bool: ...
@@ -5920,7 +5201,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/smove
         """
-        return self.execute_command("SMOVE", src, dst, value)
+        pass
 
     @overload
     def spop(
@@ -5940,8 +5221,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/spop
         """
-        args = (count is not None) and [count] or []
-        return self.execute_command("SPOP", name, *args)
+        pass
 
     @overload
     def srandmember(
@@ -5965,8 +5245,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/srandmember
         """
-        args = (number is not None) and [number] or []
-        return self.execute_command("SRANDMEMBER", name, *args)
+        pass
 
     @overload
     def srem(self: SyncClientProtocol, name: KeyT, *values: FieldT) -> int: ...
@@ -5982,7 +5261,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/srem
         """
-        return self.execute_command("SREM", name, *values)
+        pass
 
     @overload
     def sunion(
@@ -6002,8 +5281,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/sunion
         """
-        args = list_or_args(keys, args)
-        return self.execute_command("SUNION", *args, keys=args)
+        pass
 
     @overload
     def sunionstore(
@@ -6022,8 +5300,7 @@ class SetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/sunionstore
         """
-        args = list_or_args(keys, args)
-        return self.execute_command("SUNIONSTORE", dest, *args)
+        pass
 
 
 AsyncSetCommands = SetCommands
@@ -6090,15 +5367,7 @@ class StreamCommands(CommandsProtocol):
         message IDs in the given consumer group and simultaneously attempts to
         delete the corresponding entries from the stream.
         """
-        if not ids:
-            raise DataError("XACKDEL requires at least one message ID")
-
-        if ref_policy not in {"KEEPREF", "DELREF", "ACKED"}:
-            raise DataError("XACKDEL ref_policy must be one of: KEEPREF, DELREF, ACKED")
-
-        pieces = [name, groupname, ref_policy, "IDS", len(ids)]
-        pieces.extend(ids)
-        return self.execute_command("XACKDEL", *pieces)
+        pass
 
     @overload
     def xadd(
@@ -6271,36 +5540,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xcfgset
         """
-        if idmp_duration is None and idmp_maxsize is None:
-            raise DataError(
-                "XCFGSET requires at least one of idmp_duration or idmp_maxsize"
-            )
-
-        pieces: list[EncodableT] = []
-
-        if idmp_duration is not None:
-            if (
-                not isinstance(idmp_duration, int)
-                or idmp_duration < 1
-                or idmp_duration > 300
-            ):
-                raise DataError(
-                    "XCFGSET idmp_duration must be an integer between 1 and 300"
-                )
-            pieces.extend([b"IDMP-DURATION", idmp_duration])
-
-        if idmp_maxsize is not None:
-            if (
-                not isinstance(idmp_maxsize, int)
-                or idmp_maxsize < 1
-                or idmp_maxsize > 1000000
-            ):
-                raise DataError(
-                    "XCFGSET idmp_maxsize must be an integer between 1 and 1,000,000"
-                )
-            pieces.extend([b"IDMP-MAXSIZE", idmp_maxsize])
-
-        return self.execute_command("XCFGSET", name, *pieces)
+        pass
 
     @overload
     def xautoclaim(
@@ -6354,28 +5594,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xautoclaim
         """
-        try:
-            if int(min_idle_time) < 0:
-                raise DataError(
-                    "XAUTOCLAIM min_idle_time must be a nonnegative integer"
-                )
-        except TypeError:
-            pass
-
-        kwargs = {}
-        pieces = [name, groupname, consumername, min_idle_time, start_id]
-
-        try:
-            if int(count) < 0:
-                raise DataError("XPENDING count must be a integer >= 0")
-            pieces.extend([b"COUNT", count])
-        except TypeError:
-            pass
-        if justid:
-            pieces.append(b"JUSTID")
-            kwargs["parse_justid"] = True
-
-        return self.execute_command("XAUTOCLAIM", *pieces, **kwargs)
+        pass
 
     @overload
     def xclaim(
@@ -6454,41 +5673,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xclaim
         """
-        if not isinstance(min_idle_time, int) or min_idle_time < 0:
-            raise DataError("XCLAIM min_idle_time must be a non negative integer")
-        if not isinstance(message_ids, (list, tuple)) or not message_ids:
-            raise DataError(
-                "XCLAIM message_ids must be a non empty list or "
-                "tuple of message IDs to claim"
-            )
-
-        kwargs = {}
-        pieces: list[EncodableT] = [name, groupname, consumername, str(min_idle_time)]
-        pieces.extend(list(message_ids))
-
-        if idle is not None:
-            if not isinstance(idle, int):
-                raise DataError("XCLAIM idle must be an integer")
-            pieces.extend((b"IDLE", str(idle)))
-        if time is not None:
-            if not isinstance(time, int):
-                raise DataError("XCLAIM time must be an integer")
-            pieces.extend((b"TIME", str(time)))
-        if retrycount is not None:
-            if not isinstance(retrycount, int):
-                raise DataError("XCLAIM retrycount must be an integer")
-            pieces.extend((b"RETRYCOUNT", str(retrycount)))
-
-        if force:
-            if not isinstance(force, bool):
-                raise DataError("XCLAIM force must be a boolean")
-            pieces.append(b"FORCE")
-        if justid:
-            if not isinstance(justid, bool):
-                raise DataError("XCLAIM justid must be a boolean")
-            pieces.append(b"JUSTID")
-            kwargs["parse_justid"] = True
-        return self.execute_command("XCLAIM", *pieces, **kwargs)
+        pass
 
     @overload
     def xdel(self: SyncClientProtocol, name: KeyT, *ids: StreamIdT) -> int: ...
@@ -6508,7 +5693,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xdel
         """
-        return self.execute_command("XDEL", name, *ids)
+        pass
 
     @overload
     def xdelex(
@@ -6536,15 +5721,7 @@ class StreamCommands(CommandsProtocol):
         Extended version of XDEL that provides more control over how message entries
         are deleted concerning consumer groups.
         """
-        if not ids:
-            raise DataError("XDELEX requires at least one message ID")
-
-        if ref_policy not in {"KEEPREF", "DELREF", "ACKED"}:
-            raise DataError("XDELEX ref_policy must be one of: KEEPREF, DELREF, ACKED")
-
-        pieces = [name, ref_policy, "IDS", len(ids)]
-        pieces.extend(ids)
-        return self.execute_command("XDELEX", *pieces)
+        pass
 
     @overload
     def xgroup_create(
@@ -6616,7 +5793,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xgroup-delconsumer
         """
-        return self.execute_command("XGROUP DELCONSUMER", name, groupname, consumername)
+        pass
 
     @overload
     def xgroup_destroy(
@@ -6636,7 +5813,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xgroup-destroy
         """
-        return self.execute_command("XGROUP DESTROY", name, groupname)
+        pass
 
     @overload
     def xgroup_createconsumer(
@@ -6664,9 +5841,7 @@ class StreamCommands(CommandsProtocol):
 
         See: https://redis.io/commands/xgroup-createconsumer
         """
-        return self.execute_command(
-            "XGROUP CREATECONSUMER", name, groupname, consumername
-        )
+        pass
 
     @overload
     def xgroup_setid(
@@ -6701,10 +5876,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xgroup-setid
         """
-        pieces = [name, groupname, id]
-        if entries_read is not None:
-            pieces.extend(["ENTRIESREAD", entries_read])
-        return self.execute_command("XGROUP SETID", *pieces)
+        pass
 
     @overload
     def xinfo_consumers(
@@ -6726,7 +5898,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xinfo-consumers
         """
-        return self.execute_command("XINFO CONSUMERS", name, groupname)
+        pass
 
     @overload
     def xinfo_groups(self: SyncClientProtocol, name: KeyT) -> list[dict[str, Any]]: ...
@@ -6745,7 +5917,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xinfo-groups
         """
-        return self.execute_command("XINFO GROUPS", name)
+        pass
 
     @overload
     def xinfo_stream(
@@ -6767,12 +5939,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xinfo-stream
         """
-        pieces = [name]
-        options = {}
-        if full:
-            pieces.append(b"FULL")
-            options = {"full": full}
-        return self.execute_command("XINFO STREAM", *pieces, **options)
+        pass
 
     @overload
     def xlen(self: SyncClientProtocol, name: KeyT) -> int: ...
@@ -6786,7 +5953,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xlen
         """
-        return self.execute_command("XLEN", name, keys=[name])
+        pass
 
     @overload
     def xnack(
@@ -6841,24 +6008,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xnack
         """
-        if not ids:
-            raise DataError("XNACK requires at least one message ID")
-
-        if mode not in {"SILENT", "FAIL", "FATAL"}:
-            raise DataError("XNACK mode must be one of: SILENT, FAIL, FATAL")
-
-        pieces: list = [name, groupname, mode, "IDS", len(ids)]
-        pieces.extend(ids)
-
-        if retrycount is not None:
-            if retrycount < 0:
-                raise DataError("XNACK retrycount must be >= 0")
-            pieces.extend([b"RETRYCOUNT", retrycount])
-
-        if force:
-            pieces.append(b"FORCE")
-
-        return self.execute_command("XNACK", *pieces)
+        pass
 
     @overload
     def xpending(
@@ -6880,7 +6030,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xpending
         """
-        return self.execute_command("XPENDING", name, groupname, keys=[name])
+        pass
 
     @overload
     def xpending_range(
@@ -6928,40 +6078,7 @@ class StreamCommands(CommandsProtocol):
         count: number of messages to return
         consumername: name of a consumer to filter by (optional).
         """
-        if {min, max, count} == {None}:
-            if idle is not None or consumername is not None:
-                raise DataError(
-                    "if XPENDING is provided with idle time"
-                    " or consumername, it must be provided"
-                    " with min, max and count parameters"
-                )
-            return self.xpending(name, groupname)
-
-        pieces = [name, groupname]
-        if min is None or max is None or count is None:
-            raise DataError(
-                "XPENDING must be provided with min, max "
-                "and count parameters, or none of them."
-            )
-        # idle
-        try:
-            if int(idle) < 0:
-                raise DataError("XPENDING idle must be a integer >= 0")
-            pieces.extend(["IDLE", idle])
-        except TypeError:
-            pass
-        # count
-        try:
-            if int(count) < 0:
-                raise DataError("XPENDING count must be a integer >= 0")
-            pieces.extend([min, max, count])
-        except TypeError:
-            pass
-        # consumername
-        if consumername:
-            pieces.append(consumername)
-
-        return self.execute_command("XPENDING", *pieces, parse_detail=True)
+        pass
 
     @overload
     def xrange(
@@ -7004,14 +6121,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xrange
         """
-        pieces = [min, max]
-        if count is not None:
-            if not isinstance(count, int) or count < 1:
-                raise DataError("XRANGE count must be a positive integer")
-            pieces.append(b"COUNT")
-            pieces.append(str(count))
-
-        return self.execute_command("XRANGE", name, *pieces, keys=[name])
+        pass
 
     @overload
     def xread(
@@ -7048,38 +6158,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xread
         """
-        pieces = []
-        if block is not None:
-            if not isinstance(block, int) or block < 0:
-                raise DataError("XREAD block must be a non-negative integer")
-            pieces.append(b"BLOCK")
-            pieces.append(str(block))
-        if count is not None:
-            if not isinstance(count, int) or count < 1:
-                raise DataError("XREAD count must be a positive integer")
-            pieces.append(b"COUNT")
-            pieces.append(str(count))
-        if not isinstance(streams, dict) or len(streams) == 0:
-            raise DataError("XREAD streams must be a non empty dict")
-        pieces.append(b"STREAMS")
-        keys, values = zip(*streams.items())
-        pieces.extend(keys)
-        pieces.extend(values)
-        response = self.execute_command("XREAD", *pieces, keys=keys)
-
-        if inspect.iscoroutine(response):
-            # Async client - wrap in coroutine that awaits and records
-            async def _record_and_return():
-                actual_response = await response
-
-                await async_record_streaming_lag(response=actual_response)
-                return actual_response
-
-            return _record_and_return()
-        else:
-            # Sync client
-            record_streaming_lag_from_response(response=response)
-            return response
+        pass
 
     @overload
     def xreadgroup(
@@ -7226,14 +6305,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xrevrange
         """
-        pieces: list[EncodableT] = [max, min]
-        if count is not None:
-            if not isinstance(count, int) or count < 1:
-                raise DataError("XREVRANGE count must be a positive integer")
-            pieces.append(b"COUNT")
-            pieces.append(str(count))
-
-        return self.execute_command("XREVRANGE", name, *pieces, keys=[name])
+        pass
 
     @overload
     def xtrim(
@@ -7282,33 +6354,7 @@ class StreamCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/xtrim
         """
-        pieces: list[EncodableT] = []
-        if maxlen is not None and minid is not None:
-            raise DataError("Only one of ``maxlen`` or ``minid`` may be specified")
-
-        if maxlen is None and minid is None:
-            raise DataError("One of ``maxlen`` or ``minid`` must be specified")
-
-        if ref_policy is not None and ref_policy not in {"KEEPREF", "DELREF", "ACKED"}:
-            raise DataError("XTRIM ref_policy must be one of: KEEPREF, DELREF, ACKED")
-
-        if maxlen is not None:
-            pieces.append(b"MAXLEN")
-        if minid is not None:
-            pieces.append(b"MINID")
-        if approximate:
-            pieces.append(b"~")
-        if maxlen is not None:
-            pieces.append(maxlen)
-        if minid is not None:
-            pieces.append(minid)
-        if limit is not None:
-            pieces.append(b"LIMIT")
-            pieces.append(limit)
-        if ref_policy is not None:
-            pieces.append(ref_policy)
-
-        return self.execute_command("XTRIM", name, *pieces)
+        pass
 
 
 AsyncStreamCommands = StreamCommands
@@ -7390,38 +6436,7 @@ class SortedSetCommands(CommandsProtocol):
 
         See: https://redis.io/commands/ZADD
         """
-        if not mapping:
-            raise DataError("ZADD requires at least one element/score pair")
-        if nx and xx:
-            raise DataError("ZADD allows either 'nx' or 'xx', not both")
-        if gt and lt:
-            raise DataError("ZADD allows either 'gt' or 'lt', not both")
-        if incr and len(mapping) != 1:
-            raise DataError(
-                "ZADD option 'incr' only works when passing a single element/score pair"
-            )
-        if nx and (gt or lt):
-            raise DataError("Only one of 'nx', 'lt', or 'gr' may be defined.")
-
-        pieces: list[EncodableT] = []
-        options = {}
-        if nx:
-            pieces.append(b"NX")
-        if xx:
-            pieces.append(b"XX")
-        if ch:
-            pieces.append(b"CH")
-        if incr:
-            pieces.append(b"INCR")
-            options["as_score"] = True
-        if gt:
-            pieces.append(b"GT")
-        if lt:
-            pieces.append(b"LT")
-        for pair in mapping.items():
-            pieces.append(pair[1])
-            pieces.append(pair[0])
-        return self.execute_command("ZADD", name, *pieces, **options)
+        pass
 
     @overload
     def zcard(self: SyncClientProtocol, name: KeyT) -> int: ...
@@ -7435,7 +6450,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zcard
         """
-        return self.execute_command("ZCARD", name, keys=[name])
+        pass
 
     @overload
     def zcount(
@@ -7456,7 +6471,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zcount
         """
-        return self.execute_command("ZCOUNT", name, min, max, keys=[name])
+        pass
 
     @overload
     def zdiff(
@@ -7477,10 +6492,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zdiff
         """
-        pieces = [len(keys), *keys]
-        if withscores:
-            pieces.append("WITHSCORES")
-        return self.execute_command("ZDIFF", *pieces, keys=keys, withscores=withscores)
+        pass
 
     @overload
     def zdiffstore(self: SyncClientProtocol, dest: KeyT, keys: KeysT) -> int: ...
@@ -7497,8 +6509,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zdiffstore
         """
-        pieces = [len(keys), *keys]
-        return self.execute_command("ZDIFFSTORE", dest, *pieces)
+        pass
 
     @overload
     def zincrby(
@@ -7518,7 +6529,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zincrby
         """
-        return self.execute_command("ZINCRBY", name, amount, value)
+        pass
 
     @overload
     def zinter(
@@ -7564,7 +6575,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zinter
         """
-        return self._zaggregate("ZINTER", None, keys, aggregate, withscores=withscores)
+        pass
 
     @overload
     def zinterstore(
@@ -7613,7 +6624,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zinterstore
         """
-        return self._zaggregate("ZINTERSTORE", dest, keys, aggregate)
+        pass
 
     @overload
     def zintercard(
@@ -7637,8 +6648,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zintercard
         """
-        args = [numkeys, *keys, "LIMIT", limit]
-        return self.execute_command("ZINTERCARD", *args, keys=keys)
+        pass
 
     @overload
     def zlexcount(
@@ -7659,7 +6669,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zlexcount
         """
-        return self.execute_command("ZLEXCOUNT", name, min, max, keys=[name])
+        pass
 
     @overload
     def zpopmax(
@@ -7680,8 +6690,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zpopmax
         """
-        args = (count is not None) and [count] or []
-        return self.execute_command("ZPOPMAX", name, *args)
+        pass
 
     @overload
     def zpopmin(
@@ -7702,8 +6711,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zpopmin
         """
-        args = (count is not None) and [count] or []
-        return self.execute_command("ZPOPMIN", name, *args)
+        pass
 
     @overload
     def zrandmember(
@@ -7739,13 +6747,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zrandmember
         """
-        params = []
-        if count is not None:
-            params.append(count)
-        if withscores:
-            params.append("WITHSCORES")
-
-        return self.execute_command("ZRANDMEMBER", key, *params, withscores=withscores)
+        pass
 
     @overload
     def bzpopmax(
@@ -7772,11 +6774,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/bzpopmax
         """
-        if timeout is None:
-            timeout = 0
-        keys = list_or_args(keys, None)
-        keys.append(timeout)
-        return self.execute_command("BZPOPMAX", *keys)
+        pass
 
     @overload
     def bzpopmin(
@@ -7803,11 +6801,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/bzpopmin
         """
-        if timeout is None:
-            timeout = 0
-        keys: list[EncodableT] = list_or_args(keys, None)
-        keys.append(timeout)
-        return self.execute_command("BZPOPMIN", *keys)
+        pass
 
     @overload
     def zmpop(
@@ -7842,17 +6836,7 @@ class SortedSetCommands(CommandsProtocol):
         named in the ``keys`` list.
         For more information, see https://redis.io/commands/zmpop
         """
-        args = [num_keys] + keys
-        if (min and max) or (not min and not max):
-            raise DataError
-        elif min:
-            args.append("MIN")
-        else:
-            args.append("MAX")
-        if count != 1:
-            args.extend(["COUNT", count])
-
-        return self.execute_command("ZMPOP", *args)
+        pass
 
     @overload
     def bzmpop(
@@ -7897,16 +6881,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/bzmpop
         """
-        args = [timeout, numkeys, *keys]
-        if (min and max) or (not min and not max):
-            raise DataError("Either min or max, but not both must be set")
-        elif min:
-            args.append("MIN")
-        else:
-            args.append("MAX")
-        args.extend(["COUNT", count])
-
-        return self.execute_command("BZMPOP", *args)
+        pass
 
     def _zrange(
         self,
@@ -7923,31 +6898,7 @@ class SortedSetCommands(CommandsProtocol):
         offset: Optional[int] = None,
         num: Optional[int] = None,
     ) -> ResponseT:
-        if byscore and bylex:
-            raise DataError("``byscore`` and ``bylex`` can not be specified together.")
-        if (offset is not None and num is None) or (num is not None and offset is None):
-            raise DataError("``offset`` and ``num`` must both be specified.")
-        if bylex and withscores:
-            raise DataError(
-                "``withscores`` not supported in combination with ``bylex``."
-            )
-        pieces = [command]
-        if dest:
-            pieces.append(dest)
-        pieces.extend([name, start, end])
-        if byscore:
-            pieces.append("BYSCORE")
-        if bylex:
-            pieces.append("BYLEX")
-        if desc:
-            pieces.append("REV")
-        if offset is not None and num is not None:
-            pieces.extend(["LIMIT", offset, num])
-        if withscores:
-            pieces.append("WITHSCORES")
-        options = {"withscores": withscores, "score_cast_func": score_cast_func}
-        options["keys"] = [name]
-        return self.execute_command(*pieces, **options)
+        pass
 
     @overload
     def zrange(
@@ -8020,25 +6971,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zrange
         """
-        # Need to support ``desc`` also when using old redis version
-        # because it was supported in 3.5.3 (of redis-py)
-        if not byscore and not bylex and (offset is None and num is None) and desc:
-            return self.zrevrange(name, start, end, withscores, score_cast_func)
-
-        return self._zrange(
-            "ZRANGE",
-            None,
-            name,
-            start,
-            end,
-            desc,
-            byscore,
-            bylex,
-            withscores,
-            score_cast_func,
-            offset,
-            num,
-        )
+        pass
 
     @overload
     def zrevrange(
@@ -8081,12 +7014,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zrevrange
         """
-        pieces = ["ZREVRANGE", name, start, end]
-        if withscores:
-            pieces.append(b"WITHSCORES")
-        options = {"withscores": withscores, "score_cast_func": score_cast_func}
-        options["keys"] = name
-        return self.execute_command(*pieces, **options)
+        pass
 
     @overload
     def zrangestore(
@@ -8151,20 +7079,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zrangestore
         """
-        return self._zrange(
-            "ZRANGESTORE",
-            dest,
-            name,
-            start,
-            end,
-            desc,
-            byscore,
-            bylex,
-            False,
-            None,
-            offset,
-            num,
-        )
+        pass
 
     @overload
     def zrangebylex(
@@ -8203,12 +7118,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zrangebylex
         """
-        if (start is not None and num is None) or (num is not None and start is None):
-            raise DataError("``start`` and ``num`` must both be specified")
-        pieces = ["ZRANGEBYLEX", name, min, max]
-        if start is not None and num is not None:
-            pieces.extend([b"LIMIT", start, num])
-        return self.execute_command(*pieces, keys=[name])
+        pass
 
     @overload
     def zrevrangebylex(
@@ -8247,12 +7157,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zrevrangebylex
         """
-        if (start is not None and num is None) or (num is not None and start is None):
-            raise DataError("``start`` and ``num`` must both be specified")
-        pieces = ["ZREVRANGEBYLEX", name, max, min]
-        if start is not None and num is not None:
-            pieces.extend(["LIMIT", start, num])
-        return self.execute_command(*pieces, keys=[name])
+        pass
 
     @overload
     def zrangebyscore(
@@ -8302,16 +7207,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zrangebyscore
         """
-        if (start is not None and num is None) or (num is not None and start is None):
-            raise DataError("``start`` and ``num`` must both be specified")
-        pieces = ["ZRANGEBYSCORE", name, min, max]
-        if start is not None and num is not None:
-            pieces.extend(["LIMIT", start, num])
-        if withscores:
-            pieces.append("WITHSCORES")
-        options = {"withscores": withscores, "score_cast_func": score_cast_func}
-        options["keys"] = [name]
-        return self.execute_command(*pieces, **options)
+        pass
 
     @overload
     def zrevrangebyscore(
@@ -8361,16 +7257,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zrevrangebyscore
         """
-        if (start is not None and num is None) or (num is not None and start is None):
-            raise DataError("``start`` and ``num`` must both be specified")
-        pieces = ["ZREVRANGEBYSCORE", name, max, min]
-        if start is not None and num is not None:
-            pieces.extend(["LIMIT", start, num])
-        if withscores:
-            pieces.append("WITHSCORES")
-        options = {"withscores": withscores, "score_cast_func": score_cast_func}
-        options["keys"] = [name]
-        return self.execute_command(*pieces, **options)
+        pass
 
     @overload
     def zrank(
@@ -8407,13 +7294,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zrank
         """
-        pieces = ["ZRANK", name, value]
-        if withscore:
-            pieces.append("WITHSCORE")
-
-        options = {"withscore": withscore, "score_cast_func": score_cast_func}
-
-        return self.execute_command(*pieces, **options)
+        pass
 
     @overload
     def zrem(self: SyncClientProtocol, name: KeyT, *values: FieldT) -> int: ...
@@ -8429,7 +7310,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zrem
         """
-        return self.execute_command("ZREM", name, *values)
+        pass
 
     @overload
     def zremrangebylex(
@@ -8452,7 +7333,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zremrangebylex
         """
-        return self.execute_command("ZREMRANGEBYLEX", name, min, max)
+        pass
 
     @overload
     def zremrangebyrank(
@@ -8473,7 +7354,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zremrangebyrank
         """
-        return self.execute_command("ZREMRANGEBYRANK", name, min, max)
+        pass
 
     @overload
     def zremrangebyscore(
@@ -8494,7 +7375,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zremrangebyscore
         """
-        return self.execute_command("ZREMRANGEBYSCORE", name, min, max)
+        pass
 
     @overload
     def zrevrank(
@@ -8531,13 +7412,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zrevrank
         """
-        pieces = ["ZREVRANK", name, value]
-        if withscore:
-            pieces.append("WITHSCORE")
-
-        options = {"withscore": withscore, "score_cast_func": score_cast_func}
-
-        return self.execute_command(*pieces, **options)
+        pass
 
     @overload
     def zscore(
@@ -8557,7 +7432,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zscore
         """
-        return self.execute_command("ZSCORE", name, value, keys=[name])
+        pass
 
     @overload
     def zunion(
@@ -8612,14 +7487,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zunion
         """
-        return self._zaggregate(
-            "ZUNION",
-            None,
-            keys,
-            aggregate,
-            withscores=withscores,
-            score_cast_func=score_cast_func,
-        )
+        pass
 
     @overload
     def zunionstore(
@@ -8668,7 +7536,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zunionstore
         """
-        return self._zaggregate("ZUNIONSTORE", dest, keys, aggregate)
+        pass
 
     @overload
     def zmscore(
@@ -8693,10 +7561,7 @@ class SortedSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/zmscore
         """
-        if not members:
-            raise DataError("ZMSCORE members must be a non-empty list")
-        pieces = [key] + members
-        return self.execute_command("ZMSCORE", *pieces, keys=[key])
+        pass
 
     def _zaggregate(
         self,
@@ -8706,28 +7571,7 @@ class SortedSetCommands(CommandsProtocol):
         aggregate: Optional[str] = None,
         **options,
     ) -> ResponseT:
-        pieces: list[EncodableT] = [command]
-        if dest is not None:
-            pieces.append(dest)
-        pieces.append(len(keys))
-        if isinstance(keys, dict):
-            keys, weights = keys.keys(), keys.values()
-        else:
-            weights = None
-        pieces.extend(keys)
-        if weights:
-            pieces.append(b"WEIGHTS")
-            pieces.extend(weights)
-        if aggregate:
-            if aggregate.upper() in ["SUM", "MIN", "MAX", "COUNT"]:
-                pieces.append(b"AGGREGATE")
-                pieces.append(aggregate)
-            else:
-                raise DataError("aggregate can be sum, min, max or count.")
-        if options.get("withscores", False):
-            pieces.append(b"WITHSCORES")
-        options["keys"] = keys
-        return self.execute_command(*pieces, **options)
+        pass
 
 
 AsyncSortedSetCommands = SortedSetCommands
@@ -8753,7 +7597,7 @@ class HyperlogCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/pfadd
         """
-        return self.execute_command("PFADD", name, *values)
+        pass
 
     @overload
     def pfcount(self: SyncClientProtocol, *sources: KeyT) -> int: ...
@@ -8768,7 +7612,7 @@ class HyperlogCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/pfcount
         """
-        return self.execute_command("PFCOUNT", *sources)
+        pass
 
     @overload
     def pfmerge(self: SyncClientProtocol, dest: KeyT, *sources: KeyT) -> bool: ...
@@ -8784,7 +7628,7 @@ class HyperlogCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/pfmerge
         """
-        return self.execute_command("PFMERGE", dest, *sources)
+        pass
 
 
 AsyncHyperlogCommands = HyperlogCommands
@@ -8818,7 +7662,7 @@ class HashCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hdel
         """
-        return self.execute_command("HDEL", name, *keys)
+        pass
 
     @overload
     def hexists(self: SyncClientProtocol, name: str, key: str) -> bool: ...
@@ -8832,7 +7676,7 @@ class HashCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hexists
         """
-        return self.execute_command("HEXISTS", name, key, keys=[name])
+        pass
 
     @overload
     def hget(self: SyncClientProtocol, name: str, key: str) -> bytes | str | None: ...
@@ -8870,7 +7714,7 @@ class HashCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hgetall
         """
-        return self.execute_command("HGETALL", name, keys=[name])
+        pass
 
     @overload
     def hgetdel(
@@ -8894,10 +7738,7 @@ class HashCommands(CommandsProtocol):
         Available since Redis 8.0
         For more information, see https://redis.io/commands/hgetdel
         """
-        if len(keys) == 0:
-            raise DataError("'hgetdel' should have at least one key provided")
-
-        return self.execute_command("HGETDEL", name, "FIELDS", len(keys), *keys)
+        pass
 
     @overload
     def hgetex(
@@ -8952,28 +7793,7 @@ class HashCommands(CommandsProtocol):
         Available since Redis 8.0
         For more information, see https://redis.io/commands/hgetex
         """
-        if not keys:
-            raise DataError("'hgetex' should have at least one key provided")
-
-        if not at_most_one_value_set((ex, px, exat, pxat, persist)):
-            raise DataError(
-                "``ex``, ``px``, ``exat``, ``pxat``, "
-                "and ``persist`` are mutually exclusive."
-            )
-
-        exp_options: list[EncodableT] = extract_expire_flags(ex, px, exat, pxat)
-
-        if persist:
-            exp_options.append("PERSIST")
-
-        return self.execute_command(
-            "HGETEX",
-            name,
-            *exp_options,
-            "FIELDS",
-            len(keys),
-            *keys,
-        )
+        pass
 
     @overload
     def hincrby(
@@ -8991,7 +7811,7 @@ class HashCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hincrby
         """
-        return self.execute_command("HINCRBY", name, key, amount)
+        pass
 
     @overload
     def hincrbyfloat(
@@ -9011,7 +7831,7 @@ class HashCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hincrbyfloat
         """
-        return self.execute_command("HINCRBYFLOAT", name, key, amount)
+        pass
 
     @overload
     def hkeys(self: SyncClientProtocol, name: str) -> list[bytes | str]: ...
@@ -9025,7 +7845,7 @@ class HashCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hkeys
         """
-        return self.execute_command("HKEYS", name, keys=[name])
+        pass
 
     @overload
     def hlen(self: SyncClientProtocol, name: str) -> int: ...
@@ -9039,7 +7859,7 @@ class HashCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hlen
         """
-        return self.execute_command("HLEN", name, keys=[name])
+        pass
 
     @overload
     def hset(
@@ -9173,40 +7993,7 @@ class HashCommands(CommandsProtocol):
         Available since Redis 8.0
         For more information, see https://redis.io/commands/hsetex
         """
-        if key is None and not mapping and not items:
-            raise DataError("'hsetex' with no key value pairs")
-
-        if items and len(items) % 2 != 0:
-            raise DataError(
-                "'hsetex' with odd number of items. "
-                "'items' must contain a list of key/value pairs."
-            )
-
-        if not at_most_one_value_set((ex, px, exat, pxat, keepttl)):
-            raise DataError(
-                "``ex``, ``px``, ``exat``, ``pxat``, "
-                "and ``keepttl`` are mutually exclusive."
-            )
-
-        exp_options: list[EncodableT] = extract_expire_flags(ex, px, exat, pxat)
-        if data_persist_option:
-            exp_options.append(data_persist_option.value)
-
-        if keepttl:
-            exp_options.append("KEEPTTL")
-
-        pieces = []
-        if items:
-            pieces.extend(items)
-        if key is not None:
-            pieces.extend((key, value))
-        if mapping:
-            for pair in mapping.items():
-                pieces.extend(pair)
-
-        return self.execute_command(
-            "HSETEX", name, *exp_options, "FIELDS", int(len(pieces) / 2), *pieces
-        )
+        pass
 
     @overload
     def hsetnx(self: SyncClientProtocol, name: str, key: str, value: str) -> int: ...
@@ -9223,7 +8010,7 @@ class HashCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hsetnx
         """
-        return self.execute_command("HSETNX", name, key, value)
+        pass
 
     @overload
     def hmset(self: SyncClientProtocol, name: str, mapping: dict) -> bool: ...
@@ -9270,8 +8057,7 @@ class HashCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hmget
         """
-        args = list_or_args(keys, args)
-        return self.execute_command("HMGET", name, *args, keys=[name])
+        pass
 
     @overload
     def hvals(self: SyncClientProtocol, name: str) -> list[bytes | str]: ...
@@ -9285,7 +8071,7 @@ class HashCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hvals
         """
-        return self.execute_command("HVALS", name, keys=[name])
+        pass
 
     @overload
     def hstrlen(self: SyncClientProtocol, name: str, key: str) -> int: ...
@@ -9300,7 +8086,7 @@ class HashCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/hstrlen
         """
-        return self.execute_command("HSTRLEN", name, key, keys=[name])
+        pass
 
     @overload
     def hexpire(
@@ -9365,26 +8151,7 @@ class HashCommands(CommandsProtocol):
                 - `2` if the field was deleted because the specified expiration time is
                   in the past.
         """
-        conditions = [nx, xx, gt, lt]
-        if sum(conditions) > 1:
-            raise ValueError("Only one of 'nx', 'xx', 'gt', 'lt' can be specified.")
-
-        if isinstance(seconds, datetime.timedelta):
-            seconds = int(seconds.total_seconds())
-
-        options = []
-        if nx:
-            options.append("NX")
-        if xx:
-            options.append("XX")
-        if gt:
-            options.append("GT")
-        if lt:
-            options.append("LT")
-
-        return self.execute_command(
-            "HEXPIRE", name, seconds, *options, "FIELDS", len(fields), *fields
-        )
+        pass
 
     @overload
     def hpexpire(
@@ -9449,26 +8216,7 @@ class HashCommands(CommandsProtocol):
                 - `2` if the field was deleted because the specified expiration time is
                   in the past.
         """
-        conditions = [nx, xx, gt, lt]
-        if sum(conditions) > 1:
-            raise ValueError("Only one of 'nx', 'xx', 'gt', 'lt' can be specified.")
-
-        if isinstance(milliseconds, datetime.timedelta):
-            milliseconds = int(milliseconds.total_seconds() * 1000)
-
-        options = []
-        if nx:
-            options.append("NX")
-        if xx:
-            options.append("XX")
-        if gt:
-            options.append("GT")
-        if lt:
-            options.append("LT")
-
-        return self.execute_command(
-            "HPEXPIRE", name, milliseconds, *options, "FIELDS", len(fields), *fields
-        )
+        pass
 
     @overload
     def hexpireat(
@@ -9533,32 +8281,7 @@ class HashCommands(CommandsProtocol):
                 - `2` if the field was deleted because the specified expiration time is
                   in the past.
         """
-        conditions = [nx, xx, gt, lt]
-        if sum(conditions) > 1:
-            raise ValueError("Only one of 'nx', 'xx', 'gt', 'lt' can be specified.")
-
-        if isinstance(unix_time_seconds, datetime.datetime):
-            unix_time_seconds = int(unix_time_seconds.timestamp())
-
-        options = []
-        if nx:
-            options.append("NX")
-        if xx:
-            options.append("XX")
-        if gt:
-            options.append("GT")
-        if lt:
-            options.append("LT")
-
-        return self.execute_command(
-            "HEXPIREAT",
-            name,
-            unix_time_seconds,
-            *options,
-            "FIELDS",
-            len(fields),
-            *fields,
-        )
+        pass
 
     @overload
     def hpexpireat(
@@ -9623,32 +8346,7 @@ class HashCommands(CommandsProtocol):
                 - `2` if the field was deleted because the specified expiration time is
                   in the past.
         """
-        conditions = [nx, xx, gt, lt]
-        if sum(conditions) > 1:
-            raise ValueError("Only one of 'nx', 'xx', 'gt', 'lt' can be specified.")
-
-        if isinstance(unix_time_milliseconds, datetime.datetime):
-            unix_time_milliseconds = int(unix_time_milliseconds.timestamp() * 1000)
-
-        options = []
-        if nx:
-            options.append("NX")
-        if xx:
-            options.append("XX")
-        if gt:
-            options.append("GT")
-        if lt:
-            options.append("LT")
-
-        return self.execute_command(
-            "HPEXPIREAT",
-            name,
-            unix_time_milliseconds,
-            *options,
-            "FIELDS",
-            len(fields),
-            *fields,
-        )
+        pass
 
     @overload
     def hpersist(self: SyncClientProtocol, name: KeyT, *fields: str) -> list[int]: ...
@@ -9675,7 +8373,7 @@ class HashCommands(CommandsProtocol):
                 - `-1` if the field exists but has no associated expiration time.
                 - `1` if the expiration time was successfully removed from the field.
         """
-        return self.execute_command("HPERSIST", name, "FIELDS", len(fields), *fields)
+        pass
 
     @overload
     def hexpiretime(self: SyncClientProtocol, key: KeyT, *fields: str) -> list[int]: ...
@@ -9703,9 +8401,7 @@ class HashCommands(CommandsProtocol):
                 - A positive integer representing the expiration Unix timestamp in
                   seconds, if the field has an associated expiration time.
         """
-        return self.execute_command(
-            "HEXPIRETIME", key, "FIELDS", len(fields), *fields, keys=[key]
-        )
+        pass
 
     @overload
     def hpexpiretime(
@@ -9735,9 +8431,7 @@ class HashCommands(CommandsProtocol):
                 - A positive integer representing the expiration Unix timestamp in
                   milliseconds, if the field has an associated expiration time.
         """
-        return self.execute_command(
-            "HPEXPIRETIME", key, "FIELDS", len(fields), *fields, keys=[key]
-        )
+        pass
 
     @overload
     def httl(self: SyncClientProtocol, key: KeyT, *fields: str) -> list[int]: ...
@@ -9765,9 +8459,7 @@ class HashCommands(CommandsProtocol):
                 - A positive integer representing the TTL in seconds if the field has
                   an associated expiration time.
         """
-        return self.execute_command(
-            "HTTL", key, "FIELDS", len(fields), *fields, keys=[key]
-        )
+        pass
 
     @overload
     def hpttl(self: SyncClientProtocol, key: KeyT, *fields: str) -> list[int]: ...
@@ -9795,9 +8487,7 @@ class HashCommands(CommandsProtocol):
                 - A positive integer representing the TTL in milliseconds if the field
                   has an associated expiration time.
         """
-        return self.execute_command(
-            "HPTTL", key, "FIELDS", len(fields), *fields, keys=[key]
-        )
+        pass
 
 
 AsyncHashCommands = HashCommands
@@ -9978,13 +8668,7 @@ class PubSubCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/spublish
         """
-        response = self.execute_command("SPUBLISH", shard_channel, message)
-        record_pubsub_message(
-            direction=PubSubDirection.PUBLISH,
-            channel=str_if_bytes(shard_channel),
-            sharded=True,
-        )
-        return response
+        pass
 
     @overload
     def pubsub_channels(
@@ -10004,7 +8688,7 @@ class PubSubCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/pubsub-channels
         """
-        return self.execute_command("PUBSUB CHANNELS", pattern, **kwargs)
+        pass
 
     @overload
     def pubsub_shardchannels(
@@ -10024,7 +8708,7 @@ class PubSubCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/pubsub-shardchannels
         """
-        return self.execute_command("PUBSUB SHARDCHANNELS", pattern, **kwargs)
+        pass
 
     @overload
     def pubsub_numpat(self: SyncClientProtocol, **kwargs) -> int: ...
@@ -10038,7 +8722,7 @@ class PubSubCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/pubsub-numpat
         """
-        return self.execute_command("PUBSUB NUMPAT", **kwargs)
+        pass
 
     @overload
     def pubsub_numsub(
@@ -10059,7 +8743,7 @@ class PubSubCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/pubsub-numsub
         """
-        return self.execute_command("PUBSUB NUMSUB", *args, **kwargs)
+        pass
 
     @overload
     def pubsub_shardnumsub(
@@ -10080,7 +8764,7 @@ class PubSubCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/pubsub-shardnumsub
         """
-        return self.execute_command("PUBSUB SHARDNUMSUB", *args, **kwargs)
+        pass
 
 
 AsyncPubSubCommands = PubSubCommands
@@ -10099,7 +8783,7 @@ class ScriptCommands(CommandsProtocol):
         numkeys: int,
         *keys_and_args: Union[KeyT, EncodableT],
     ) -> Any:
-        return self.execute_command(command, script, numkeys, *keys_and_args)
+        pass
 
     @overload
     def eval(
@@ -10130,7 +8814,7 @@ class ScriptCommands(CommandsProtocol):
 
         For more information, see  https://redis.io/commands/eval
         """
-        return self._eval("EVAL", script, numkeys, *keys_and_args)
+        pass
 
     @overload
     def eval_ro(
@@ -10160,7 +8844,7 @@ class ScriptCommands(CommandsProtocol):
 
         For more information, see  https://redis.io/commands/eval_ro
         """
-        return self._eval("EVAL_RO", script, numkeys, *keys_and_args)
+        pass
 
     def _evalsha(
         self,
@@ -10169,7 +8853,7 @@ class ScriptCommands(CommandsProtocol):
         numkeys: int,
         *keys_and_args: Union[KeyT, EncodableT],
     ) -> Any:
-        return self.execute_command(command, sha, numkeys, *keys_and_args)
+        pass
 
     @overload
     def evalsha(
@@ -10201,7 +8885,7 @@ class ScriptCommands(CommandsProtocol):
 
         For more information, see  https://redis.io/commands/evalsha
         """
-        return self._evalsha("EVALSHA", sha, numkeys, *keys_and_args)
+        pass
 
     @overload
     def evalsha_ro(
@@ -10232,7 +8916,7 @@ class ScriptCommands(CommandsProtocol):
 
         For more information, see  https://redis.io/commands/evalsha_ro
         """
-        return self._evalsha("EVALSHA_RO", sha, numkeys, *keys_and_args)
+        pass
 
     @overload
     def script_exists(self: SyncClientProtocol, *args: str) -> list[bool]: ...
@@ -10250,7 +8934,7 @@ class ScriptCommands(CommandsProtocol):
 
         For more information, see  https://redis.io/commands/script-exists
         """
-        return self.execute_command("SCRIPT EXISTS", *args)
+        pass
 
     def script_debug(self, *args) -> None:
         raise NotImplementedError(
@@ -10279,19 +8963,7 @@ class ScriptCommands(CommandsProtocol):
 
         For more information, see  https://redis.io/commands/script-flush
         """
-
-        # Redis pre 6 had no sync_type.
-        if sync_type not in ["SYNC", "ASYNC", None]:
-            raise DataError(
-                "SCRIPT FLUSH defaults to SYNC in redis > 6.2, or "
-                "accepts SYNC/ASYNC. For older versions, "
-                "of redis leave as None."
-            )
-        if sync_type is None:
-            pieces = []
-        else:
-            pieces = [sync_type]
-        return self.execute_command("SCRIPT FLUSH", *pieces)
+        pass
 
     @overload
     def script_kill(self: SyncClientProtocol) -> bool: ...
@@ -10305,7 +8977,7 @@ class ScriptCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/script-kill
         """
-        return self.execute_command("SCRIPT KILL")
+        pass
 
     @overload
     def script_load(self: SyncClientProtocol, script: ScriptTextT) -> str: ...
@@ -10321,7 +8993,7 @@ class ScriptCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/script-load
         """
-        return self.execute_command("SCRIPT LOAD", script)
+        pass
 
     def register_script(
         self: Union["redis.client.Redis", "redis.cluster.RedisCluster"],
@@ -10333,12 +9005,12 @@ class ScriptCommands(CommandsProtocol):
         deal with scripts, keys, and shas. This is the preferred way to work
         with Lua scripts.
         """
-        return Script(self, script)
+        pass
 
 
 class AsyncScriptCommands(ScriptCommands):
     async def script_debug(self, *args) -> None:
-        return super().script_debug()
+        pass
 
     def register_script(
         self: Union["redis.asyncio.client.Redis", "redis.asyncio.cluster.RedisCluster"],
@@ -10350,7 +9022,7 @@ class AsyncScriptCommands(ScriptCommands):
         deal with scripts, keys, and shas. This is the preferred way to work
         with Lua scripts.
         """
-        return AsyncScript(self, script)
+        pass
 
 
 class GeoCommands(CommandsProtocol):
@@ -10407,19 +9079,7 @@ class GeoCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/geoadd
         """
-        if nx and xx:
-            raise DataError("GEOADD allows either 'nx' or 'xx', not both")
-        if len(values) % 3 != 0:
-            raise DataError("GEOADD requires places with lon, lat and name values")
-        pieces = [name]
-        if nx:
-            pieces.append("NX")
-        if xx:
-            pieces.append("XX")
-        if ch:
-            pieces.append("CH")
-        pieces.extend(values)
-        return self.execute_command("GEOADD", *pieces)
+        pass
 
     @overload
     def geodist(
@@ -10450,12 +9110,7 @@ class GeoCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/geodist
         """
-        pieces: list[EncodableT] = [name, place1, place2]
-        if unit and unit not in ("m", "km", "mi", "ft"):
-            raise DataError("GEODIST invalid unit")
-        elif unit:
-            pieces.append(unit)
-        return self.execute_command("GEODIST", *pieces, keys=[name])
+        pass
 
     @overload
     def geohash(
@@ -10476,7 +9131,7 @@ class GeoCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/geohash
         """
-        return self.execute_command("GEOHASH", name, *values, keys=[name])
+        pass
 
     @overload
     def geopos(
@@ -10498,7 +9153,7 @@ class GeoCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/geopos
         """
-        return self.execute_command("GEOPOS", name, *values, keys=[name])
+        pass
 
     @overload
     def georadius(
@@ -10582,22 +9237,7 @@ class GeoCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/georadius
         """
-        return self._georadiusgeneric(
-            "GEORADIUS",
-            name,
-            longitude,
-            latitude,
-            radius,
-            unit=unit,
-            withdist=withdist,
-            withcoord=withcoord,
-            withhash=withhash,
-            count=count,
-            sort=sort,
-            store=store,
-            store_dist=store_dist,
-            any=any,
-        )
+        pass
 
     @overload
     def georadiusbymember(
@@ -10656,67 +9296,12 @@ class GeoCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/georadiusbymember
         """
-        return self._georadiusgeneric(
-            "GEORADIUSBYMEMBER",
-            name,
-            member,
-            radius,
-            unit=unit,
-            withdist=withdist,
-            withcoord=withcoord,
-            withhash=withhash,
-            count=count,
-            sort=sort,
-            store=store,
-            store_dist=store_dist,
-            any=any,
-        )
+        pass
 
     def _georadiusgeneric(
         self, command: str, *args: EncodableT, **kwargs: Union[EncodableT, None]
     ) -> ResponseT:
-        pieces = list(args)
-        if kwargs["unit"] and kwargs["unit"] not in ("m", "km", "mi", "ft"):
-            raise DataError("GEORADIUS invalid unit")
-        elif kwargs["unit"]:
-            pieces.append(kwargs["unit"])
-        else:
-            pieces.append("m")
-
-        if kwargs["any"] and kwargs["count"] is None:
-            raise DataError("``any`` can't be provided without ``count``")
-
-        for arg_name, byte_repr in (
-            ("withdist", "WITHDIST"),
-            ("withcoord", "WITHCOORD"),
-            ("withhash", "WITHHASH"),
-        ):
-            if kwargs[arg_name]:
-                pieces.append(byte_repr)
-
-        if kwargs["count"] is not None:
-            pieces.extend(["COUNT", kwargs["count"]])
-            if kwargs["any"]:
-                pieces.append("ANY")
-
-        if kwargs["sort"]:
-            if kwargs["sort"] == "ASC":
-                pieces.append("ASC")
-            elif kwargs["sort"] == "DESC":
-                pieces.append("DESC")
-            else:
-                raise DataError("GEORADIUS invalid sort")
-
-        if kwargs["store"] and kwargs["store_dist"]:
-            raise DataError("GEORADIUS store and store_dist cant be set together")
-
-        if kwargs["store"]:
-            pieces.extend([b"STORE", kwargs["store"]])
-
-        if kwargs["store_dist"]:
-            pieces.extend([b"STOREDIST", kwargs["store_dist"]])
-
-        return self.execute_command(command, *pieces, **kwargs)
+        pass
 
     @overload
     def geosearch(
@@ -10816,26 +9401,7 @@ class GeoCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/geosearch
         """
-
-        return self._geosearchgeneric(
-            "GEOSEARCH",
-            name,
-            member=member,
-            longitude=longitude,
-            latitude=latitude,
-            unit=unit,
-            radius=radius,
-            width=width,
-            height=height,
-            sort=sort,
-            count=count,
-            any=any,
-            withcoord=withcoord,
-            withdist=withdist,
-            withhash=withhash,
-            store=None,
-            store_dist=None,
-        )
+        pass
 
     @overload
     def geosearchstore(
@@ -10899,92 +9465,12 @@ class GeoCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/geosearchstore
         """
-        return self._geosearchgeneric(
-            "GEOSEARCHSTORE",
-            dest,
-            name,
-            member=member,
-            longitude=longitude,
-            latitude=latitude,
-            unit=unit,
-            radius=radius,
-            width=width,
-            height=height,
-            sort=sort,
-            count=count,
-            any=any,
-            withcoord=None,
-            withdist=None,
-            withhash=None,
-            store=None,
-            store_dist=storedist,
-        )
+        pass
 
     def _geosearchgeneric(
         self, command: str, *args: EncodableT, **kwargs: Union[EncodableT, None]
     ) -> ResponseT:
-        pieces = list(args)
-
-        # FROMMEMBER or FROMLONLAT
-        if kwargs["member"] is None:
-            if kwargs["longitude"] is None or kwargs["latitude"] is None:
-                raise DataError("GEOSEARCH must have member or longitude and latitude")
-        if kwargs["member"]:
-            if kwargs["longitude"] or kwargs["latitude"]:
-                raise DataError(
-                    "GEOSEARCH member and longitude or latitude cant be set together"
-                )
-            pieces.extend([b"FROMMEMBER", kwargs["member"]])
-        if kwargs["longitude"] is not None and kwargs["latitude"] is not None:
-            pieces.extend([b"FROMLONLAT", kwargs["longitude"], kwargs["latitude"]])
-
-        # BYRADIUS or BYBOX
-        if kwargs["radius"] is None:
-            if kwargs["width"] is None or kwargs["height"] is None:
-                raise DataError("GEOSEARCH must have radius or width and height")
-        if kwargs["unit"] is None:
-            raise DataError("GEOSEARCH must have unit")
-        if kwargs["unit"].lower() not in ("m", "km", "mi", "ft"):
-            raise DataError("GEOSEARCH invalid unit")
-        if kwargs["radius"]:
-            if kwargs["width"] or kwargs["height"]:
-                raise DataError(
-                    "GEOSEARCH radius and width or height cant be set together"
-                )
-            pieces.extend([b"BYRADIUS", kwargs["radius"], kwargs["unit"]])
-        if kwargs["width"] and kwargs["height"]:
-            pieces.extend([b"BYBOX", kwargs["width"], kwargs["height"], kwargs["unit"]])
-
-        # sort
-        if kwargs["sort"]:
-            if kwargs["sort"].upper() == "ASC":
-                pieces.append(b"ASC")
-            elif kwargs["sort"].upper() == "DESC":
-                pieces.append(b"DESC")
-            else:
-                raise DataError("GEOSEARCH invalid sort")
-
-        # count any
-        if kwargs["count"]:
-            pieces.extend([b"COUNT", kwargs["count"]])
-            if kwargs["any"]:
-                pieces.append(b"ANY")
-        elif kwargs["any"]:
-            raise DataError("GEOSEARCH ``any`` can't be provided without count")
-
-        # other properties
-        for arg_name, byte_repr in (
-            ("withdist", b"WITHDIST"),
-            ("withcoord", b"WITHCOORD"),
-            ("withhash", b"WITHHASH"),
-            ("store_dist", b"STOREDIST"),
-        ):
-            if kwargs[arg_name]:
-                pieces.append(byte_repr)
-
-        kwargs["keys"] = [args[0] if command == "GEOSEARCH" else args[1]]
-
-        return self.execute_command(command, *pieces, **kwargs)
+        pass
 
 
 AsyncGeoCommands = GeoCommands
@@ -11010,7 +9496,7 @@ class ModuleCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/module-load
         """
-        return self.execute_command("MODULE LOAD", path, *args)
+        pass
 
     @overload
     def module_loadex(
@@ -11039,15 +9525,7 @@ class ModuleCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/module-loadex
         """
-        pieces = []
-        if options is not None:
-            pieces.append("CONFIG")
-            pieces.extend(options)
-        if args is not None:
-            pieces.append("ARGS")
-            pieces.extend(args)
-
-        return self.execute_command("MODULE LOADEX", path, *pieces)
+        pass
 
     @overload
     def module_unload(self: SyncClientProtocol, name) -> bool: ...
@@ -11062,7 +9540,7 @@ class ModuleCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/module-unload
         """
-        return self.execute_command("MODULE UNLOAD", name)
+        pass
 
     @overload
     def module_list(self: SyncClientProtocol) -> list[dict[Any, Any]]: ...
@@ -11077,7 +9555,7 @@ class ModuleCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/module-list
         """
-        return self.execute_command("MODULE LIST")
+        pass
 
     def command_info(self) -> None:
         raise NotImplementedError(
@@ -11091,7 +9569,7 @@ class ModuleCommands(CommandsProtocol):
     def command_count(self: AsyncClientProtocol) -> Awaitable[int]: ...
 
     def command_count(self) -> int | Awaitable[int]:
-        return self.execute_command("COMMAND COUNT")
+        pass
 
     @overload
     def command_getkeys(self: SyncClientProtocol, *args) -> list[bytes | str]: ...
@@ -11104,7 +9582,7 @@ class ModuleCommands(CommandsProtocol):
     def command_getkeys(
         self, *args
     ) -> list[bytes | str] | Awaitable[list[bytes | str]]:
-        return self.execute_command("COMMAND GETKEYS", *args)
+        pass
 
     @overload
     def command(self: SyncClientProtocol) -> dict[str, dict[str, Any]]: ...
@@ -11122,7 +9600,7 @@ class ModuleCommands(CommandsProtocol):
 
 class AsyncModuleCommands(ModuleCommands):
     async def command_info(self) -> None:
-        return super().command_info()
+        pass
 
 
 class ClusterCommands(CommandsProtocol):
@@ -11139,7 +9617,7 @@ class ClusterCommands(CommandsProtocol):
     ) -> Awaitable[Any]: ...
 
     def cluster(self, cluster_arg, *args, **kwargs) -> Any | Awaitable[Any]:
-        return self.execute_command(f"CLUSTER {cluster_arg.upper()}", *args, **kwargs)
+        pass
 
     @overload
     def readwrite(self: SyncClientProtocol, **kwargs) -> bool: ...
@@ -11153,7 +9631,7 @@ class ClusterCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/readwrite
         """
-        return self.execute_command("READWRITE", **kwargs)
+        pass
 
     @overload
     def readonly(self: SyncClientProtocol, **kwargs) -> bool: ...
@@ -11167,7 +9645,7 @@ class ClusterCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/readonly
         """
-        return self.execute_command("READONLY", **kwargs)
+        pass
 
 
 AsyncClusterCommands = ClusterCommands
@@ -11201,9 +9679,7 @@ class FunctionCommands:
 
         For more information, see https://redis.io/commands/function-load
         """
-        pieces = ["REPLACE"] if replace else []
-        pieces.append(code)
-        return self.execute_command("FUNCTION LOAD", *pieces)
+        pass
 
     @overload
     def function_delete(self: SyncClientProtocol, library: str) -> bool: ...
@@ -11217,7 +9693,7 @@ class FunctionCommands:
 
         For more information, see https://redis.io/commands/function-delete
         """
-        return self.execute_command("FUNCTION DELETE", library)
+        pass
 
     @overload
     def function_flush(self: SyncClientProtocol, mode: str = "SYNC") -> bool: ...
@@ -11233,7 +9709,7 @@ class FunctionCommands:
 
         For more information, see https://redis.io/commands/function-flush
         """
-        return self.execute_command("FUNCTION FLUSH", mode)
+        pass
 
     @overload
     def function_list(
@@ -11261,13 +9737,10 @@ class FunctionCommands:
             withcode: cause the server to include the libraries source implementation
                 in the reply
         """
-        args = ["LIBRARYNAME", library]
-        if withcode:
-            args.append("WITHCODE")
-        return self.execute_command("FUNCTION LIST", *args)
+        pass
 
     def _fcall(self, command: str, function, numkeys: int, *keys_and_args: Any) -> Any:
-        return self.execute_command(command, function, numkeys, *keys_and_args)
+        pass
 
     @overload
     def fcall(
@@ -11287,7 +9760,7 @@ class FunctionCommands:
 
         For more information, see https://redis.io/commands/fcall
         """
-        return self._fcall("FCALL", function, numkeys, *keys_and_args)
+        pass
 
     @overload
     def fcall_ro(
@@ -11308,7 +9781,7 @@ class FunctionCommands:
 
         For more information, see https://redis.io/commands/fcall_ro
         """
-        return self._fcall("FCALL_RO", function, numkeys, *keys_and_args)
+        pass
 
     @overload
     def function_dump(self: SyncClientProtocol) -> bytes: ...
@@ -11322,12 +9795,7 @@ class FunctionCommands:
 
         For more information, see https://redis.io/commands/function-dump
         """
-        from redis.client import NEVER_DECODE
-
-        options = {}
-        options[NEVER_DECODE] = []
-
-        return self.execute_command("FUNCTION DUMP", **options)
+        pass
 
     @overload
     def function_restore(
@@ -11349,7 +9817,7 @@ class FunctionCommands:
 
         For more information, see https://redis.io/commands/function-restore
         """
-        return self.execute_command("FUNCTION RESTORE", payload, policy)
+        pass
 
     @overload
     def function_kill(self: SyncClientProtocol) -> bytes | str: ...
@@ -11363,7 +9831,7 @@ class FunctionCommands:
 
         For more information, see https://redis.io/commands/function-kill
         """
-        return self.execute_command("FUNCTION KILL")
+        pass
 
     @overload
     def function_stats(self: SyncClientProtocol) -> Any: ...
@@ -11378,7 +9846,7 @@ class FunctionCommands:
 
         For more information, see https://redis.io/commands/function-stats
         """
-        return self.execute_command("FUNCTION STATS")
+        pass
 
 
 AsyncFunctionCommands = FunctionCommands

@@ -65,15 +65,10 @@ class Field:
             raise ValueError("Non-Sortable non-Indexable fields are ignored")
 
     def append_arg(self, value):
-        self.args.append(value)
+        pass
 
     def redis_args(self):
-        args = [self.name]
-        if self.as_name:
-            args += [self.AS, self.as_name]
-        args += self.args
-        args += self.args_suffix
-        return args
+        pass
 
 
 class TextField(Field):

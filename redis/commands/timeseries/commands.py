@@ -121,17 +121,7 @@ class TimeSeriesCommands:
                 if `duplicate_policy` is set to `last`, and if `ignore_max_time_diff` is
                 also set. Available since RedisTimeSeries version 1.12.0.
         """
-        params: list[EncodableT] = [key]
-        self._append_retention(params, retention_msecs)
-        self._append_uncompressed(params, uncompressed)
-        self._append_chunk_size(params, chunk_size)
-        self._append_duplicate_policy(params, duplicate_policy)
-        self._append_labels(params, labels)
-        self._append_insertion_filters(
-            params, ignore_max_time_diff, ignore_max_val_diff
-        )
-
-        return self.execute_command(CREATE_CMD, *params)
+        pass
 
     @overload
     def alter(
@@ -215,16 +205,7 @@ class TimeSeriesCommands:
                 if `duplicate_policy` is set to `last`, and if `ignore_max_time_diff` is
                 also set. Available since RedisTimeSeries version 1.12.0.
         """
-        params: list[EncodableT] = [key]
-        self._append_retention(params, retention_msecs)
-        self._append_chunk_size(params, chunk_size)
-        self._append_duplicate_policy(params, duplicate_policy)
-        self._append_labels(params, labels)
-        self._append_insertion_filters(
-            params, ignore_max_time_diff, ignore_max_val_diff
-        )
-
-        return self.execute_command(ALTER_CMD, *params)
+        pass
 
     @overload
     def add(
@@ -380,11 +361,7 @@ class TimeSeriesCommands:
             A list that contains, for each sample, either the timestamp that was used,
             or an error, if the sample could not be added.
         """
-        params: list[EncodableT] = []
-        for ktv in ktv_tuples:
-            params.extend(ktv)
-
-        return self.execute_command(MADD_CMD, *params)
+        pass
 
     @overload
     def incrby(
@@ -495,18 +472,7 @@ class TimeSeriesCommands:
         Returns:
             The timestamp of the sample that was modified or added.
         """
-        params: list[EncodableT] = [key, value]
-        self._append_timestamp(params, timestamp)
-        self._append_retention(params, retention_msecs)
-        self._append_uncompressed(params, uncompressed)
-        self._append_chunk_size(params, chunk_size)
-        self._append_duplicate_policy(params, duplicate_policy)
-        self._append_labels(params, labels)
-        self._append_insertion_filters(
-            params, ignore_max_time_diff, ignore_max_val_diff
-        )
-
-        return self.execute_command(INCRBY_CMD, *params)
+        pass
 
     @overload
     def decrby(
@@ -617,18 +583,7 @@ class TimeSeriesCommands:
         Returns:
             The timestamp of the sample that was modified or added.
         """
-        params: list[EncodableT] = [key, value]
-        self._append_timestamp(params, timestamp)
-        self._append_retention(params, retention_msecs)
-        self._append_uncompressed(params, uncompressed)
-        self._append_chunk_size(params, chunk_size)
-        self._append_duplicate_policy(params, duplicate_policy)
-        self._append_labels(params, labels)
-        self._append_insertion_filters(
-            params, ignore_max_time_diff, ignore_max_val_diff
-        )
-
-        return self.execute_command(DECRBY_CMD, *params)
+        pass
 
     @overload
     def delete(
@@ -710,12 +665,7 @@ class TimeSeriesCommands:
                 Assure that there is a bucket that starts at exactly align_timestamp and
                 align all other buckets accordingly.
         """
-        params: list[EncodableT] = [source_key, dest_key]
-        self._append_aggregation(params, aggregation_type, bucket_size_msec)
-        if align_timestamp is not None:
-            params.append(align_timestamp)
-
-        return self.execute_command(CREATERULE_CMD, *params)
+        pass
 
     @overload
     def deleterule(
@@ -733,7 +683,7 @@ class TimeSeriesCommands:
 
         For more information see https://redis.io/commands/ts.deleterule/
         """
-        return self.execute_command(DELETERULE_CMD, source_key, dest_key)
+        pass
 
     def __range_params(
         self,
@@ -752,17 +702,7 @@ class TimeSeriesCommands:
         empty: bool | None,
     ):
         """Create TS.RANGE and TS.REVRANGE arguments."""
-        params: list[EncodableT] = [key, from_time, to_time]
-        self._append_latest(params, latest)
-        self._append_filer_by_ts(params, filter_by_ts)
-        self._append_filer_by_value(params, filter_by_min_value, filter_by_max_value)
-        self._append_count(params, count)
-        self._append_align(params, align)
-        self._append_aggregation(params, aggregation_type, bucket_size_msec)
-        self._append_bucket_timestamp(params, bucket_timestamp)
-        self._append_empty(params, empty)
-
-        return params
+        pass
 
     @overload
     def range(
@@ -860,22 +800,7 @@ class TimeSeriesCommands:
             empty:
                 Reports aggregations for empty buckets.
         """
-        params = self.__range_params(
-            key,
-            from_time,
-            to_time,
-            count,
-            aggregation_type,
-            bucket_size_msec,
-            filter_by_ts,
-            filter_by_min_value,
-            filter_by_max_value,
-            align,
-            latest,
-            bucket_timestamp,
-            empty,
-        )
-        return self.execute_command(RANGE_CMD, *params, keys=[key])
+        pass
 
     @overload
     def revrange(
@@ -975,22 +900,7 @@ class TimeSeriesCommands:
             empty:
                 Reports aggregations for empty buckets.
         """
-        params = self.__range_params(
-            key,
-            from_time,
-            to_time,
-            count,
-            aggregation_type,
-            bucket_size_msec,
-            filter_by_ts,
-            filter_by_min_value,
-            filter_by_max_value,
-            align,
-            latest,
-            bucket_timestamp,
-            empty,
-        )
-        return self.execute_command(REVRANGE_CMD, *params, keys=[key])
+        pass
 
     def __mrange_params(
         self,
@@ -1013,28 +923,7 @@ class TimeSeriesCommands:
         empty: bool | None,
     ):
         """Create TS.MRANGE and TS.MREVRANGE arguments."""
-        if (
-            groupby is not None
-            and isinstance(aggregation_type, list)
-            and len(aggregation_type) > 1
-        ):
-            raise DataError(
-                "GROUPBY is not allowed when multiple aggregators are specified"
-            )
-        params: list[EncodableT] = [from_time, to_time]
-        self._append_latest(params, latest)
-        self._append_filer_by_ts(params, filter_by_ts)
-        self._append_filer_by_value(params, filter_by_min_value, filter_by_max_value)
-        self._append_with_labels(params, with_labels, select_labels)
-        self._append_count(params, count)
-        self._append_align(params, align)
-        self._append_aggregation(params, aggregation_type, bucket_size_msec)
-        self._append_bucket_timestamp(params, bucket_timestamp)
-        self._append_empty(params, empty)
-        params.extend(["FILTER"])
-        params += filters
-        self._append_groupby_reduce(params, groupby, reduce)
-        return params
+        pass
 
     @overload
     def mrange(
@@ -1158,27 +1047,7 @@ class TimeSeriesCommands:
             empty:
                 Reports aggregations for empty buckets.
         """
-        params = self.__mrange_params(
-            aggregation_type,
-            bucket_size_msec,
-            count,
-            filters,
-            from_time,
-            to_time,
-            with_labels,
-            filter_by_ts,
-            filter_by_min_value,
-            filter_by_max_value,
-            groupby,
-            reduce,
-            select_labels,
-            align,
-            latest,
-            bucket_timestamp,
-            empty,
-        )
-
-        return self.execute_command(MRANGE_CMD, *params)
+        pass
 
     @overload
     def mrevrange(
@@ -1302,27 +1171,7 @@ class TimeSeriesCommands:
             empty:
                 Reports aggregations for empty buckets.
         """
-        params = self.__mrange_params(
-            aggregation_type,
-            bucket_size_msec,
-            count,
-            filters,
-            from_time,
-            to_time,
-            with_labels,
-            filter_by_ts,
-            filter_by_min_value,
-            filter_by_max_value,
-            groupby,
-            reduce,
-            select_labels,
-            align,
-            latest,
-            bucket_timestamp,
-            empty,
-        )
-
-        return self.execute_command(MREVRANGE_CMD, *params)
+        pass
 
     @overload
     def get(
@@ -1396,12 +1245,7 @@ class TimeSeriesCommands:
                 Used when a time series is a compaction, reports the compacted value of
                 the latest possibly partial bucket.
         """
-        params: list[EncodableT] = []
-        self._append_latest(params, latest)
-        self._append_with_labels(params, with_labels, select_labels)
-        params.extend(["FILTER"])
-        params += filters
-        return self.execute_command(MGET_CMD, *params)
+        pass
 
     @overload
     def info(self: SyncClientProtocol, key: KeyT) -> TSInfo | dict[str, Any]: ...
@@ -1439,7 +1283,7 @@ class TimeSeriesCommands:
 
         For more information see https://redis.io/commands/ts.queryindex/
         """
-        return self.execute_command(QUERYINDEX_CMD, *filters)
+        pass
 
     @staticmethod
     def _append_uncompressed(params: list[EncodableT], uncompressed: bool | None):
@@ -1454,23 +1298,14 @@ class TimeSeriesCommands:
         select_labels: list[str] | None,
     ):
         """Append labels behavior to params."""
-        if with_labels and select_labels:
-            raise DataError(
-                "with_labels and select_labels cannot be provided together."
-            )
-
-        if with_labels:
-            params.extend(["WITHLABELS"])
-        if select_labels:
-            params.extend(["SELECTED_LABELS", *select_labels])
+        pass
 
     @staticmethod
     def _append_groupby_reduce(
         params: list[EncodableT], groupby: str | None, reduce: str | None
     ):
         """Append GROUPBY REDUCE property to params."""
-        if groupby is not None and reduce is not None:
-            params.extend(["GROUPBY", groupby, "REDUCE", reduce.upper()])
+        pass
 
     @staticmethod
     def _append_retention(params: list[EncodableT], retention: int | None):
@@ -1489,20 +1324,17 @@ class TimeSeriesCommands:
     @staticmethod
     def _append_count(params: list[EncodableT], count: int | None):
         """Append COUNT property to params."""
-        if count is not None:
-            params.extend(["COUNT", count])
+        pass
 
     @staticmethod
     def _append_timestamp(params: list[EncodableT], timestamp: int | None):
         """Append TIMESTAMP property to params."""
-        if timestamp is not None:
-            params.extend(["TIMESTAMP", timestamp])
+        pass
 
     @staticmethod
     def _append_align(params: list[EncodableT], align: int | str | None):
         """Append ALIGN property to params."""
-        if align is not None:
-            params.extend(["ALIGN", align])
+        pass
 
     @staticmethod
     def _append_aggregation(
@@ -1511,13 +1343,7 @@ class TimeSeriesCommands:
         bucket_size_msec: int | None,
     ):
         """Append AGGREGATION property to params."""
-        if aggregation_type is not None:
-            if isinstance(aggregation_type, list):
-                params.extend(
-                    ["AGGREGATION", ",".join(aggregation_type), bucket_size_msec]
-                )
-            else:
-                params.extend(["AGGREGATION", aggregation_type, bucket_size_msec])
+        pass
 
     @staticmethod
     def _append_chunk_size(params: list[EncodableT], chunk_size: int | None):
@@ -1542,16 +1368,14 @@ class TimeSeriesCommands:
     @staticmethod
     def _append_filer_by_ts(params: list[EncodableT], ts_list: list[int] | None):
         """Append FILTER_BY_TS property to params."""
-        if ts_list is not None:
-            params.extend(["FILTER_BY_TS", *ts_list])
+        pass
 
     @staticmethod
     def _append_filer_by_value(
         params: list[EncodableT], min_value: int | None, max_value: int | None
     ):
         """Append FILTER_BY_VALUE property to params."""
-        if min_value is not None and max_value is not None:
-            params.extend(["FILTER_BY_VALUE", min_value, max_value])
+        pass
 
     @staticmethod
     def _append_latest(params: list[EncodableT], latest: bool | None):
@@ -1564,14 +1388,12 @@ class TimeSeriesCommands:
         params: list[EncodableT], bucket_timestamp: str | None
     ):
         """Append BUCKET_TIMESTAMP property to params."""
-        if bucket_timestamp is not None:
-            params.extend(["BUCKETTIMESTAMP", bucket_timestamp])
+        pass
 
     @staticmethod
     def _append_empty(params: list[EncodableT], empty: bool | None):
         """Append EMPTY property to params."""
-        if empty:
-            params.append("EMPTY")
+        pass
 
     @staticmethod
     def _append_insertion_filters(

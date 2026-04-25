@@ -6,9 +6,7 @@ def _parse_info_args(args):
 
     Handles both RESP2 (flat list) and RESP3 (dict) responses.
     """
-    if isinstance(args, dict):
-        return {nativestr(k): v for k, v in args.items()}
-    return dict(zip(map(nativestr, args[::2]), args[1::2]))
+    pass
 
 
 class BFInfo:

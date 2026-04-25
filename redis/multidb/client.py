@@ -132,7 +132,7 @@ class MultiDBClient(RedisModuleCommands, CoreCommands):
         """
         Returns a sorted (by weight) list of all databases.
         """
-        return self._databases
+        pass
 
     def set_active_database(self, database: SyncDatabase) -> None:
         """
@@ -172,111 +172,36 @@ class MultiDBClient(RedisModuleCommands, CoreCommands):
             config: DatabaseConfig object that contains the database configuration.
             skip_initial_health_check: If True, adds the database even if it is unhealthy.
         """
-        # The retry object is not used in the lower level clients, so we can safely remove it.
-        # We rely on command_retry in terms of global retries.
-        config.client_kwargs["retry"] = Retry(retries=0, backoff=NoBackoff())
-
-        # Maintenance notifications are disabled by default in underlying clients,
-        # but user can override this by providing their own config.
-        if "maint_notifications_config" not in config.client_kwargs:
-            config.client_kwargs["maint_notifications_config"] = (
-                MaintNotificationsConfig(enabled=False)
-            )
-
-        if config.from_url:
-            client = self._config.client_class.from_url(
-                config.from_url, **config.client_kwargs
-            )
-        elif config.from_pool:
-            config.from_pool.set_retry(Retry(retries=0, backoff=NoBackoff()))
-            client = self._config.client_class.from_pool(
-                connection_pool=config.from_pool
-            )
-        else:
-            client = self._config.client_class(**config.client_kwargs)
-
-        circuit = (
-            config.default_circuit_breaker()
-            if config.circuit is None
-            else config.circuit
-        )
-
-        database = Database(
-            client=client,
-            circuit=circuit,
-            weight=config.weight,
-            health_check_url=config.health_check_url,
-        )
-
-        try:
-            self._bg_scheduler.run_coro_sync(self._check_db_health, database)
-        except UnhealthyDatabaseException:
-            if not skip_initial_health_check:
-                raise
-
-        highest_weighted_db, highest_weight = self._databases.get_top_n(1)[0]
-        self._databases.add(database, database.weight)
-        self._change_active_database(database, highest_weighted_db)
+        pass
 
     def _change_active_database(
         self, new_database: SyncDatabase, highest_weight_database: SyncDatabase
     ):
-        if (
-            new_database.weight > highest_weight_database.weight
-            and new_database.circuit.state == CBState.CLOSED
-        ):
-            self.command_executor.active_database = (
-                new_database,
-                GeoFailoverReason.AUTOMATIC,
-            )
+        pass
 
     def remove_database(self, database: Database):
         """
         Removes a database from the database list.
         """
-        weight = self._databases.remove(database)
-        highest_weighted_db, highest_weight = self._databases.get_top_n(1)[0]
-
-        if (
-            highest_weight <= weight
-            and highest_weighted_db.circuit.state == CBState.CLOSED
-        ):
-            self.command_executor.active_database = (
-                highest_weighted_db,
-                GeoFailoverReason.MANUAL,
-            )
+        pass
 
     def update_database_weight(self, database: SyncDatabase, weight: float):
         """
         Updates a database from the database list.
         """
-        exists = None
-
-        for existing_db, _ in self._databases:
-            if existing_db == database:
-                exists = True
-                break
-
-        if not exists:
-            raise ValueError("Given database is not a member of database list")
-
-        highest_weighted_db, highest_weight = self._databases.get_top_n(1)[0]
-        self._databases.update_weight(database, weight)
-        database.weight = weight
-        self._change_active_database(database, highest_weighted_db)
+        pass
 
     def add_failure_detector(self, failure_detector: FailureDetector):
         """
         Adds a new failure detector to the database.
         """
-        self._failure_detectors.append(failure_detector)
+        pass
 
     def add_health_check(self, healthcheck: HealthCheck):
         """
         Adds a new health check to the database.
         """
-        with self._hc_lock:
-            self._health_checks.append(healthcheck)
+        pass
 
     def execute_command(self, *args, **options):
         """
@@ -393,23 +318,7 @@ class MultiDBClient(RedisModuleCommands, CoreCommands):
     def _on_circuit_state_change_callback(
         self, circuit: CircuitBreaker, old_state: CBState, new_state: CBState
     ):
-        if new_state == CBState.HALF_OPEN:
-            self._bg_scheduler.run_coro_fire_and_forget(
-                self._check_db_health, circuit.database
-            )
-            return
-
-        if old_state == CBState.CLOSED and new_state == CBState.OPEN:
-            logger.warning(
-                f"Database {circuit.database} is unreachable. Failover has been initiated."
-            )
-
-            self._bg_scheduler.run_once(
-                DEFAULT_GRACE_PERIOD, _half_open_circuit, circuit
-            )
-
-        if old_state != CBState.CLOSED and new_state == CBState.CLOSED:
-            logger.info(f"Database {circuit.database} is reachable again.")
+        pass
 
     def close(self):
         """
@@ -431,7 +340,7 @@ class MultiDBClient(RedisModuleCommands, CoreCommands):
 
 
 def _half_open_circuit(circuit: CircuitBreaker):
-    circuit.state = CBState.HALF_OPEN
+    pass
 
 
 class Pipeline(RedisModuleCommands, CoreCommands):
@@ -539,7 +448,7 @@ class PubSub:
 
     @property
     def subscribed(self) -> bool:
-        return self._client.command_executor.active_pubsub.subscribed
+        pass
 
     def execute_command(self, *args):
         return self._client.command_executor.execute_pubsub_method(
@@ -594,18 +503,14 @@ class PubSub:
         when a message is received on that channel rather than producing a message via
         ``listen()`` or ``get_sharded_message()``.
         """
-        return self._client.command_executor.execute_pubsub_method(
-            "ssubscribe", *args, **kwargs
-        )
+        pass
 
     def sunsubscribe(self, *args):
         """
         Unsubscribe from the supplied shard_channels. If empty, unsubscribe from
         all shard_channels
         """
-        return self._client.command_executor.execute_pubsub_method(
-            "sunsubscribe", *args
-        )
+        pass
 
     def get_message(
         self, ignore_subscribe_messages: bool = False, timeout: float = 0.0

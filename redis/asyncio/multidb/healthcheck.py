@@ -351,15 +351,15 @@ class AbstractHealthCheck(HealthCheck):
 
     @property
     def health_check_probes(self) -> int:
-        return self._health_check_probes
+        pass
 
     @property
     def health_check_delay(self) -> float:
-        return self._health_check_delay
+        pass
 
     @property
     def health_check_timeout(self) -> float:
-        return self._health_check_timeout
+        pass
 
     @abstractmethod
     async def check_health(self, database, hc_client: AsyncRedisClientT) -> bool:

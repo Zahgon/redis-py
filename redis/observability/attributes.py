@@ -377,7 +377,7 @@ class AttributeBuilder:
         Returns:
             Unique pool name in format "address:port/db"
         """
-        return f"{server_address}:{server_port}/{db_namespace}"
+        pass
 
 
 def get_pool_name(pool: Union["ConnectionPoolInterface", "ConnectionPool"]) -> str:

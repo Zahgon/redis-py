@@ -38,7 +38,7 @@ class TokenResponse:
         return self._token
 
     def get_ttl_ms(self) -> float:
-        return self._token.get_expires_at_ms() - self._token.get_received_at_ms()
+        pass
 
 
 class SimpleToken(TokenInterface):
@@ -124,7 +124,4 @@ class JWToken(TokenInterface):
         return datetime.now(timezone.utc).timestamp() * 1000
 
     def _validate_token(self):
-        actual_fields = {x for x in self._decoded.keys()}
-
-        if len(self.REQUIRED_FIELDS - actual_fields) != 0:
-            raise InvalidTokenSchemaErr(self.REQUIRED_FIELDS - actual_fields)
+        pass

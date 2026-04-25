@@ -271,7 +271,7 @@ class DynamicPolicyResolver(BasePolicyResolver):
         super().__init__(commands_parser.get_command_policies(), fallback)
 
     def with_fallback(self, fallback: "PolicyResolver") -> "PolicyResolver":
-        return DynamicPolicyResolver(self._commands_parser, fallback)
+        pass
 
 
 class StaticPolicyResolver(BasePolicyResolver):
@@ -288,7 +288,7 @@ class StaticPolicyResolver(BasePolicyResolver):
         super().__init__(STATIC_POLICIES, fallback)
 
     def with_fallback(self, fallback: "PolicyResolver") -> "PolicyResolver":
-        return StaticPolicyResolver(fallback)
+        pass
 
 
 class AsyncDynamicPolicyResolver(AsyncBasePolicyResolver):
@@ -310,7 +310,7 @@ class AsyncDynamicPolicyResolver(AsyncBasePolicyResolver):
         super().__init__(policy_records, fallback)
 
     def with_fallback(self, fallback: "AsyncPolicyResolver") -> "AsyncPolicyResolver":
-        return AsyncDynamicPolicyResolver(self._policies, fallback)
+        pass
 
 
 class AsyncStaticPolicyResolver(AsyncBasePolicyResolver):
@@ -327,4 +327,4 @@ class AsyncStaticPolicyResolver(AsyncBasePolicyResolver):
         super().__init__(STATIC_POLICIES, fallback)
 
     def with_fallback(self, fallback: "AsyncPolicyResolver") -> "AsyncPolicyResolver":
-        return AsyncStaticPolicyResolver(fallback)
+        pass

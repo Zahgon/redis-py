@@ -60,9 +60,7 @@ class _HiredisParser(BaseParser, PushNotificationsParser):
             pass
 
     def handle_pubsub_push_response(self, response):
-        logger = getLogger("push_response")
-        logger.debug("Push response: " + str(response))
-        return response
+        pass
 
     def on_connect(self, connection, **kwargs):
         import hiredis
@@ -212,9 +210,7 @@ class _AsyncHiredisParser(AsyncBaseParser, AsyncPushNotificationsParser):
         self._hiredis_PushNotificationType = None
 
     async def handle_pubsub_push_response(self, response):
-        logger = getLogger("push_response")
-        logger.debug("Push response: " + str(response))
-        return response
+        pass
 
     def on_connect(self, connection):
         import hiredis

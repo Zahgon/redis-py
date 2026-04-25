@@ -233,21 +233,13 @@ class AbstractAsyncKeyspaceNotifications(AsyncKeyspaceNotificationsInterface):
                 async_handler = handler
 
                 async def _async_wrap_handler(message):
-                    notification = KeyNotification.from_message(
-                        message, key_prefix=key_prefix
-                    )
-                    if notification is not None:
-                        await async_handler(notification)
+                    pass
 
                 wrapped_handler = _async_wrap_handler
             else:
 
                 def _sync_wrap_handler(message):
-                    notification = KeyNotification.from_message(
-                        message, key_prefix=key_prefix
-                    )
-                    if notification is not None:
-                        handler(notification)
+                    pass
 
                 wrapped_handler = _sync_wrap_handler
 
@@ -336,8 +328,7 @@ class AbstractAsyncKeyspaceNotifications(AsyncKeyspaceNotificationsInterface):
         handler: AsyncHandlerT | None = None,
     ):
         """Subscribe to keyspace notifications for specific keys."""
-        channel = KeyspaceChannel(key_or_pattern, db=db)
-        await self.subscribe(channel, handler=handler)
+        pass
 
     async def subscribe_keyevent(
         self,
@@ -346,8 +337,7 @@ class AbstractAsyncKeyspaceNotifications(AsyncKeyspaceNotificationsInterface):
         handler: AsyncHandlerT | None = None,
     ):
         """Subscribe to keyevent notifications for specific event types."""
-        channel = KeyeventChannel(event, db=db)
-        await self.subscribe(channel, handler=handler)
+        pass
 
     async def __aenter__(self):
         return self
@@ -502,7 +492,7 @@ class AsyncKeyspaceNotifications(AbstractAsyncKeyspaceNotifications):
     @property
     def subscribed(self) -> bool:
         """Check if there are any active subscriptions and not closed."""
-        return not self._closed and self._pubsub.subscribed
+        pass
 
     async def aclose(self):
         """Close the pubsub connection and clean up resources."""
@@ -567,9 +557,7 @@ class AsyncClusterKeyspaceNotifications(AbstractAsyncKeyspaceNotifications):
     @property
     def subscribed(self) -> bool:
         """Check if there are any active subscriptions and not closed."""
-        return not self._closed and bool(
-            self._subscribed_patterns or self._subscribed_channels
-        )
+        pass
 
     def _track_subscribe(
         self, patterns: dict[str, Any], exact_channels: dict[str, Any]

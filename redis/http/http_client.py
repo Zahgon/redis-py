@@ -178,15 +178,7 @@ class HttpClient:
         timeout: Optional[float] = None,
         expect_json: bool = True,
     ) -> Union[HttpResponse, Any]:
-        return self._json_call(
-            "POST",
-            path,
-            params=params,
-            headers=headers,
-            timeout=timeout,
-            body=self._prepare_body(json_body=json_body, data=data),
-            expect_json=expect_json,
-        )
+        pass
 
     def put(
         self,
@@ -200,15 +192,7 @@ class HttpClient:
         timeout: Optional[float] = None,
         expect_json: bool = True,
     ) -> Union[HttpResponse, Any]:
-        return self._json_call(
-            "PUT",
-            path,
-            params=params,
-            headers=headers,
-            timeout=timeout,
-            body=self._prepare_body(json_body=json_body, data=data),
-            expect_json=expect_json,
-        )
+        pass
 
     def patch(
         self,

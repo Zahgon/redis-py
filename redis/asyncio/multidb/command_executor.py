@@ -168,18 +168,18 @@ class DefaultCommandExecutor(BaseCommandExecutor, AsyncCommandExecutor):
 
     @property
     def databases(self) -> Databases:
-        return self._databases
+        pass
 
     @property
     def failure_detectors(self) -> List[AsyncFailureDetector]:
-        return self._failure_detectors
+        pass
 
     def add_failure_detector(self, failure_detector: AsyncFailureDetector) -> None:
-        self._failure_detectors.append(failure_detector)
+        pass
 
     @property
     def active_database(self) -> Optional[AsyncDatabase]:
-        return self._active_database
+        pass
 
     async def set_active_database(
         self, database: AsyncDatabase, reason: GeoFailoverReason
@@ -204,19 +204,19 @@ class DefaultCommandExecutor(BaseCommandExecutor, AsyncCommandExecutor):
 
     @property
     def active_pubsub(self) -> Optional[PubSub]:
-        return self._active_pubsub
+        pass
 
     @active_pubsub.setter
     def active_pubsub(self, pubsub: PubSub) -> None:
-        self._active_pubsub = pubsub
+        pass
 
     @property
     def failover_strategy_executor(self) -> FailoverStrategyExecutor:
-        return self._failover_strategy_executor
+        pass
 
     @property
     def command_retry(self) -> Retry:
-        return self._command_retry
+        pass
 
     def pubsub(self, **kwargs):
         if self._active_pubsub is None:
@@ -342,15 +342,4 @@ class DefaultCommandExecutor(BaseCommandExecutor, AsyncCommandExecutor):
         """
         Registers necessary listeners.
         """
-        failure_listener = RegisterCommandFailure(self._failure_detectors)
-        resubscribe_listener = ResubscribeOnActiveDatabaseChanged()
-        close_connection_listener = CloseConnectionOnActiveDatabaseChanged()
-        self._event_dispatcher.register_listeners(
-            {
-                AsyncOnCommandsFailEvent: [failure_listener],
-                AsyncActiveDatabaseChanged: [
-                    close_connection_listener,
-                    resubscribe_listener,
-                ],
-            }
-        )
+        pass

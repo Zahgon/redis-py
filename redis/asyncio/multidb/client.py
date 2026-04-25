@@ -147,7 +147,7 @@ class MultiDBClient(AsyncRedisModuleCommands, AsyncCoreCommands):
         """
         Returns a sorted (by weight) list of all databases.
         """
-        return self._databases
+        pass
 
     async def set_active_database(self, database: AsyncDatabase) -> None:
         """
@@ -186,102 +186,36 @@ class MultiDBClient(AsyncRedisModuleCommands, AsyncCoreCommands):
             config: DatabaseConfig object that contains the database configuration.
             skip_initial_health_check: If True, adds the database even if it is unhealthy.
         """
-        # The retry object is not used in the lower level clients, so we can safely remove it.
-        # We rely on command_retry in terms of global retries.
-        config.client_kwargs.update({"retry": Retry(retries=0, backoff=NoBackoff())})
-
-        if config.from_url:
-            client = self._config.client_class.from_url(
-                config.from_url, **config.client_kwargs
-            )
-        elif config.from_pool:
-            config.from_pool.set_retry(Retry(retries=0, backoff=NoBackoff()))
-            client = self._config.client_class.from_pool(
-                connection_pool=config.from_pool
-            )
-        else:
-            client = self._config.client_class(**config.client_kwargs)
-
-        circuit = (
-            config.default_circuit_breaker()
-            if config.circuit is None
-            else config.circuit
-        )
-
-        database = Database(
-            client=client,
-            circuit=circuit,
-            weight=config.weight,
-            health_check_url=config.health_check_url,
-        )
-
-        try:
-            await self._check_db_health(database)
-        except UnhealthyDatabaseException:
-            if not skip_initial_health_check:
-                raise
-
-        highest_weighted_db, highest_weight = self._databases.get_top_n(1)[0]
-        self._databases.add(database, database.weight)
-        await self._change_active_database(database, highest_weighted_db)
+        pass
 
     async def _change_active_database(
         self, new_database: AsyncDatabase, highest_weight_database: AsyncDatabase
     ):
-        if (
-            new_database.weight > highest_weight_database.weight
-            and new_database.circuit.state == CBState.CLOSED
-        ):
-            await self.command_executor.set_active_database(
-                new_database, GeoFailoverReason.AUTOMATIC
-            )
+        pass
 
     async def remove_database(self, database: AsyncDatabase):
         """
         Removes a database from the database list.
         """
-        weight = self._databases.remove(database)
-        highest_weighted_db, highest_weight = self._databases.get_top_n(1)[0]
-
-        if (
-            highest_weight <= weight
-            and highest_weighted_db.circuit.state == CBState.CLOSED
-        ):
-            await self.command_executor.set_active_database(
-                highest_weighted_db, GeoFailoverReason.MANUAL
-            )
+        pass
 
     async def update_database_weight(self, database: AsyncDatabase, weight: float):
         """
         Updates a database from the database list.
         """
-        exists = None
-
-        for existing_db, _ in self._databases:
-            if existing_db == database:
-                exists = True
-                break
-
-        if not exists:
-            raise ValueError("Given database is not a member of database list")
-
-        highest_weighted_db, highest_weight = self._databases.get_top_n(1)[0]
-        self._databases.update_weight(database, weight)
-        database.weight = weight
-        await self._change_active_database(database, highest_weighted_db)
+        pass
 
     def add_failure_detector(self, failure_detector: AsyncFailureDetector):
         """
         Adds a new failure detector to the database.
         """
-        self._failure_detectors.append(failure_detector)
+        pass
 
     async def add_health_check(self, healthcheck: HealthCheck):
         """
         Adds a new health check to the database.
         """
-        async with self._hc_lock:
-            self._health_checks.append(healthcheck)
+        pass
 
     async def execute_command(self, *args, **options):
         """
@@ -410,26 +344,11 @@ class MultiDBClient(AsyncRedisModuleCommands, AsyncCoreCommands):
     def _on_circuit_state_change_callback(
         self, circuit: CircuitBreaker, old_state: CBState, new_state: CBState
     ):
-        loop = asyncio.get_running_loop()
-
-        if new_state == CBState.HALF_OPEN:
-            self._half_open_state_task = asyncio.create_task(
-                self._check_db_health(circuit.database)
-            )
-            return
-
-        if old_state == CBState.CLOSED and new_state == CBState.OPEN:
-            logger.warning(
-                f"Database {circuit.database} is unreachable. Failover has been initiated."
-            )
-            loop.call_later(DEFAULT_GRACE_PERIOD, _half_open_circuit, circuit)
-
-        if old_state != CBState.CLOSED and new_state == CBState.CLOSED:
-            logger.info(f"Database {circuit.database} is reachable again.")
+        pass
 
 
 def _half_open_circuit(circuit: CircuitBreaker):
-    circuit.state = CBState.HALF_OPEN
+    pass
 
 
 class Pipeline(AsyncRedisModuleCommands, AsyncCoreCommands):
@@ -454,7 +373,7 @@ class Pipeline(AsyncRedisModuleCommands, AsyncCoreCommands):
         return self._async_self().__await__()
 
     async def _async_self(self):
-        return self
+        pass
 
     def __len__(self) -> int:
         return len(self._command_stack)
@@ -529,7 +448,7 @@ class PubSub:
 
     @property
     def subscribed(self) -> bool:
-        return self._client.command_executor.active_pubsub.subscribed
+        pass
 
     async def execute_command(self, *args: EncodableT):
         return await self._client.command_executor.execute_pubsub_method(

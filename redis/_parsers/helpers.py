@@ -6,100 +6,27 @@ from redis.utils import str_if_bytes
 
 def timestamp_to_datetime(response):
     "Converts a unix timestamp to a Python datetime object"
-    if not response:
-        return None
-    try:
-        response = int(response)
-    except ValueError:
-        return None
-    return datetime.datetime.fromtimestamp(response)
+    pass
 
 
 def parse_debug_object(response):
     "Parse the results of Redis's DEBUG OBJECT command into a Python dict"
-    # The 'type' of the object is the first item in the response, but isn't
-    # prefixed with a name
-    response = str_if_bytes(response)
-    response = "type:" + response
-    response = dict(kv.split(":") for kv in response.split())
-
-    # parse some expected int values from the string response
-    # note: this cmd isn't spec'd so these may not appear in all redis versions
-    int_fields = ("refcount", "serializedlength", "lru", "lru_seconds_idle")
-    for field in int_fields:
-        if field in response:
-            response[field] = int(response[field])
-
-    return response
+    pass
 
 
 def parse_info(response):
     """Parse the result of Redis's INFO command into a Python dict"""
-    info = {}
-    response = str_if_bytes(response)
-
-    def get_value(value):
-        if "," not in value and "=" not in value:
-            try:
-                if "." in value:
-                    return float(value)
-                else:
-                    return int(value)
-            except ValueError:
-                return value
-        elif "=" not in value:
-            return [get_value(v) for v in value.split(",") if v]
-        else:
-            sub_dict = {}
-            for item in value.split(","):
-                if not item:
-                    continue
-                if "=" in item:
-                    k, v = item.rsplit("=", 1)
-                    sub_dict[k] = get_value(v)
-                else:
-                    sub_dict[item] = True
-            return sub_dict
-
-    for line in response.splitlines():
-        if line and not line.startswith("#"):
-            if line.find(":") != -1:
-                # Split, the info fields keys and values.
-                # Note that the value may contain ':'. but the 'host:'
-                # pseudo-command is the only case where the key contains ':'
-                key, value = line.split(":", 1)
-                if key == "cmdstat_host":
-                    key, value = line.rsplit(":", 1)
-
-                if key == "module":
-                    # Hardcode a list for key 'modules' since there could be
-                    # multiple lines that started with 'module'
-                    info.setdefault("modules", []).append(get_value(value))
-                else:
-                    info[key] = get_value(value)
-            else:
-                # if the line isn't splittable, append it to the "__raw__" key
-                info.setdefault("__raw__", []).append(line)
-
-    return info
+    pass
 
 
 def parse_memory_stats(response, **kwargs):
     """Parse the results of MEMORY STATS"""
-    stats = pairs_to_dict(response, decode_keys=True)
-    for key, value in stats.items():
-        if key.startswith("db.") and isinstance(value, list):
-            stats[key] = pairs_to_dict(value, decode_keys=True)
-    return stats
+    pass
 
 
 def parse_memory_stats_resp3(response, **kwargs):
     """Parse MEMORY STATS for RESP3 — decode keys to str, preserve native values."""
-    stats = {str_if_bytes(key): value for key, value in response.items()}
-    for key, value in stats.items():
-        if key.startswith("db.") and isinstance(value, dict):
-            stats[key] = {str_if_bytes(k): v for k, v in value.items()}
-    return stats
+    pass
 
 
 SENTINEL_STATE_TYPES = {
@@ -130,75 +57,35 @@ SENTINEL_STATE_TYPES = {
 
 
 def parse_sentinel_state(item):
-    result = pairs_to_dict_typed(item, SENTINEL_STATE_TYPES)
-    flags = set(result["flags"].split(","))
-    result["flags"] = flags
-    for name, flag in (
-        ("is_master", "master"),
-        ("is_slave", "slave"),
-        ("is_sdown", "s_down"),
-        ("is_odown", "o_down"),
-        ("is_sentinel", "sentinel"),
-        ("is_disconnected", "disconnected"),
-        ("is_master_down", "master_down"),
-    ):
-        result[name] = flag in flags
-    return result
+    pass
 
 
 def parse_sentinel_master(response, **options):
-    return parse_sentinel_state(map(str_if_bytes, response))
+    pass
 
 
 def parse_sentinel_state_resp3(response, **options):
-    result = {}
-    for key in response:
-        try:
-            value = SENTINEL_STATE_TYPES[str_if_bytes(key)](str_if_bytes(response[key]))
-            result[str_if_bytes(key)] = value
-        except Exception:
-            result[str_if_bytes(key)] = str_if_bytes(response[key])
-    flags = set(result["flags"].split(","))
-    result["flags"] = flags
-    for name, flag in (
-        ("is_master", "master"),
-        ("is_slave", "slave"),
-        ("is_sdown", "s_down"),
-        ("is_odown", "o_down"),
-        ("is_sentinel", "sentinel"),
-        ("is_disconnected", "disconnected"),
-        ("is_master_down", "master_down"),
-    ):
-        result[name] = flag in flags
-    return result
+    pass
 
 
 def parse_sentinel_masters(response, **options):
-    result = {}
-    for item in response:
-        state = parse_sentinel_state(map(str_if_bytes, item))
-        result[state["name"]] = state
-    return result
+    pass
 
 
 def parse_sentinel_masters_resp3(response, **options):
-    result = {}
-    for master in response:
-        state = parse_sentinel_state_resp3(master)
-        result[state["name"]] = state
-    return result
+    pass
 
 
 def parse_sentinel_slaves_and_sentinels(response, **options):
-    return [parse_sentinel_state(map(str_if_bytes, item)) for item in response]
+    pass
 
 
 def parse_sentinel_slaves_and_sentinels_resp3(response, **options):
-    return [parse_sentinel_state_resp3(item, **options) for item in response]
+    pass
 
 
 def parse_sentinel_get_master(response, **options):
-    return response and (response[0], int(response[1])) or None
+    pass
 
 
 def pairs_to_dict(response, decode_keys=False, decode_string_values=False):
@@ -221,18 +108,7 @@ def pairs_to_dict(response, decode_keys=False, decode_string_values=False):
 
 
 def pairs_to_dict_typed(response, type_info):
-    it = iter(response)
-    result = {}
-    for key, value in zip(it, it):
-        if key in type_info:
-            try:
-                value = type_info[key](value)
-            except Exception:
-                # if for some reason the value can't be coerced, just use
-                # the string value
-                pass
-        result[key] = value
-    return result
+    pass
 
 
 def _wrap_score_cast_func(score_cast_func):
@@ -245,16 +121,7 @@ def _wrap_score_cast_func(score_cast_func):
     callable), we try the original function first and only fall back to
     converting through float() on ValueError.
     """
-    if score_cast_func is float:
-        return score_cast_func
-
-    def _safe_cast(x):
-        try:
-            return score_cast_func(x)
-        except (ValueError, TypeError):
-            return score_cast_func(float(x))
-
-    return _safe_cast
+    pass
 
 
 def zset_score_pairs(response, **options):
@@ -262,13 +129,7 @@ def zset_score_pairs(response, **options):
     If ``withscores`` is specified in the options, return the response as
     a list of [value, score] pairs
     """
-    if not response or not options.get("withscores"):
-        return response
-    score_cast_func = _wrap_score_cast_func(options.get("score_cast_func", float))
-    it = iter(response)
-    # Normalise RESP2 byte-string scores to float before applying the cast
-    # so that score_cast_func receives the same type as in RESP3.
-    return [[val, score_cast_func(float(score))] for val, score in zip(it, it)]
+    pass
 
 
 def zset_score_for_rank(response, **options):
@@ -276,12 +137,7 @@ def zset_score_for_rank(response, **options):
     If ``withscores`` is specified in the options, return the response as
     a [value, score] pair
     """
-    if not response or not options.get("withscore"):
-        return response
-    score_cast_func = _wrap_score_cast_func(options.get("score_cast_func", float))
-    # Normalise RESP2 byte-string scores to float before applying the cast
-    # so that score_cast_func receives the same type as in RESP3.
-    return [response[0], score_cast_func(float(response[1]))]
+    pass
 
 
 def zset_score_pairs_resp3(response, **options):
@@ -289,10 +145,7 @@ def zset_score_pairs_resp3(response, **options):
     If ``withscores`` is specified in the options, return the response as
     a list of [value, score] pairs
     """
-    if not response or not options.get("withscores"):
-        return response
-    score_cast_func = options.get("score_cast_func", float)
-    return [[name, score_cast_func(val)] for name, val in response]
+    pass
 
 
 def hrandfield_pairs(response, **options):
@@ -300,10 +153,7 @@ def hrandfield_pairs(response, **options):
     If ``withvalues`` is specified in the options, return the response as
     a list of [field, value] pairs (pairing flat interleaved list).
     """
-    if not response or not options.get("withvalues"):
-        return response
-    it = iter(response)
-    return [[field, val] for field, val in zip(it, it)]
+    pass
 
 
 def parse_zmpop(response, **options):
@@ -311,16 +161,7 @@ def parse_zmpop(response, **options):
     Parse ZMPOP/BZMPOP response, casting scores to float.
     Response format: [key, [[member, score], ...]] or None.
     """
-    if response is None:
-        return None
-    key, members = response
-    return [
-        key,
-        [
-            [member, score if isinstance(score, float) else float(score)]
-            for member, score in members
-        ],
-    ]
+    pass
 
 
 def parse_lcs(response, **options):
@@ -331,12 +172,7 @@ def parse_lcs(response, **options):
     which we convert to a dict. RESP3 returns a native dict.
     Both have keys normalized to strings.
     """
-    if isinstance(response, list):
-        it = iter(response)
-        return {str_if_bytes(k): v for k, v in zip(it, it)}
-    if isinstance(response, dict):
-        return {str_if_bytes(k): v for k, v in response.items()}
-    return response
+    pass
 
 
 def zpop_score_pairs(response, **options):
@@ -347,11 +183,7 @@ def zpop_score_pairs(response, **options):
     Always pairs and casts scores — no ``withscores`` gate required because
     ZPOPMAX/ZPOPMIN always include scores in their response.
     """
-    if not response:
-        return response
-    score_cast_func = _wrap_score_cast_func(options.get("score_cast_func", float))
-    it = iter(response)
-    return [[val, score_cast_func(float(score))] for val, score in zip(it, it)]
+    pass
 
 
 def zpop_score_pairs_resp3(response, **options):
@@ -361,14 +193,7 @@ def zpop_score_pairs_resp3(response, **options):
     - With count: nested [[member, score], ...]
     Normalizes both to list of [member, score] pairs with score_cast_func applied.
     """
-    if not response:
-        return response
-    score_cast_func = options.get("score_cast_func", float)
-    # Detect flat vs nested: if first element is a list, it's nested (with count)
-    if isinstance(response[0], list):
-        return [[name, score_cast_func(val)] for name, val in response]
-    else:
-        return [[response[0], score_cast_func(response[1])]]
+    pass
 
 
 def zset_score_for_rank_resp3(response, **options):
@@ -376,10 +201,7 @@ def zset_score_for_rank_resp3(response, **options):
     If ``withscores`` is specified in the options, return the response as
     a [value, score] pair
     """
-    if not response or not options.get("withscore"):
-        return response
-    score_cast_func = options.get("score_cast_func", float)
-    return [response[0], score_cast_func(response[1])]
+    pass
 
 
 def sort_return_tuples(response, **options):
@@ -387,211 +209,88 @@ def sort_return_tuples(response, **options):
     If ``groups`` is specified, return the response as a list of
     n-element tuples with n being the value found in options['groups']
     """
-    if not response or not options.get("groups"):
-        return response
-    n = options["groups"]
-    return list(zip(*[response[i::n] for i in range(n)]))
+    pass
 
 
 def parse_stream_list(response, **options):
-    if response is None:
-        return None
-    data = []
-    for r in response:
-        if r is not None:
-            if "claim_min_idle_time" in options:
-                data.append((r[0], pairs_to_dict(r[1]), *r[2:]))
-            else:
-                data.append((r[0], pairs_to_dict(r[1])))
-        else:
-            data.append((None, None))
-    return data
+    pass
 
 
 def pairs_to_dict_with_str_keys(response):
-    return pairs_to_dict(response, decode_keys=True)
+    pass
 
 
 def parse_list_of_dicts(response):
-    return list(map(pairs_to_dict_with_str_keys, response))
+    pass
 
 
 def parse_xclaim(response, **options):
-    if options.get("parse_justid", False):
-        return response
-    return parse_stream_list(response)
+    pass
 
 
 def parse_xautoclaim(response, **options):
-    if options.get("parse_justid", False):
-        return response[1]
-    response[1] = parse_stream_list(response[1])
-    return response
+    pass
 
 
 def parse_xinfo_stream(response, **options):
-    if isinstance(response, list):
-        data = pairs_to_dict(response, decode_keys=True)
-    else:
-        data = {str_if_bytes(k): v for k, v in response.items()}
-    if not options.get("full", False):
-        first = data.get("first-entry")
-        if first is not None and first[0] is not None:
-            data["first-entry"] = (first[0], pairs_to_dict(first[1]))
-        last = data["last-entry"]
-        if last is not None and last[0] is not None:
-            data["last-entry"] = (last[0], pairs_to_dict(last[1]))
-    else:
-        data["entries"] = {_id: pairs_to_dict(entry) for _id, entry in data["entries"]}
-        if len(data["groups"]) > 0 and isinstance(data["groups"][0], list):
-            data["groups"] = [
-                pairs_to_dict(group, decode_keys=True) for group in data["groups"]
-            ]
-            for g in data["groups"]:
-                if g["consumers"] and g["consumers"][0] is not None:
-                    g["consumers"] = [
-                        pairs_to_dict(c, decode_keys=True) for c in g["consumers"]
-                    ]
-        else:
-            data["groups"] = [
-                {str_if_bytes(k): v for k, v in group.items()}
-                for group in data["groups"]
-            ]
-    return data
+    pass
 
 
 def parse_xread(response, **options):
-    if response is None:
-        return {}
-    return {r[0]: parse_stream_list(r[1], **options) for r in response}
+    pass
 
 
 def parse_xread_resp3(response, **options):
-    if response is None:
-        return {}
-    return {key: parse_stream_list(value, **options) for key, value in response.items()}
+    pass
 
 
 def parse_xpending(response, **options):
-    if options.get("parse_detail", False):
-        return parse_xpending_range(response)
-    consumers = [{"name": n, "pending": int(p)} for n, p in response[3] or []]
-    return {
-        "pending": response[0],
-        "min": response[1],
-        "max": response[2],
-        "consumers": consumers,
-    }
+    pass
 
 
 def parse_xpending_range(response):
-    k = ("message_id", "consumer", "time_since_delivered", "times_delivered")
-    return [dict(zip(k, r)) for r in response]
+    pass
 
 
 def float_or_none(response):
-    if response is None:
-        return None
-    return float(response)
+    pass
 
 
 def bool_ok(response, **options):
-    return str_if_bytes(response) == "OK"
+    pass
 
 
 def parse_zadd(response, **options):
-    if response is None:
-        return None
-    if options.get("as_score"):
-        return float(response)
-    return int(response)
+    pass
 
 
 def parse_client_list(response, **options):
-    clients = []
-    for c in str_if_bytes(response).splitlines():
-        client_dict = {}
-        tokens = c.split(" ")
-        last_key = None
-        for token in tokens:
-            if "=" in token:
-                # Values might contain '='
-                key, value = token.split("=", 1)
-                client_dict[key] = value
-                last_key = key
-            else:
-                # Values may include spaces. For instance, when running Redis via a Unix socket — such as
-                # "/tmp/redis sock/redis.sock" — the addr or laddr field will include a space.
-                client_dict[last_key] += " " + token
-
-        if client_dict:
-            clients.append(client_dict)
-    return clients
+    pass
 
 
 def parse_config_get(response, **options):
-    response = [str_if_bytes(i) if i is not None else None for i in response]
-    return response and pairs_to_dict(response) or {}
+    pass
 
 
 def parse_scan(response, **options):
-    cursor, r = response
-    return int(cursor), r
+    pass
 
 
 def parse_hscan(response, **options):
-    cursor, r = response
-    no_values = options.get("no_values", False)
-    if no_values:
-        payload = r or []
-    else:
-        payload = r and pairs_to_dict(r) or {}
-    return int(cursor), payload
+    pass
 
 
 def parse_zscan(response, **options):
-    score_cast_func = _wrap_score_cast_func(options.get("score_cast_func", float))
-    cursor, r = response
-    it = iter(r)
-    # Normalise scores to float before applying the cast so that
-    # score_cast_func receives the same type regardless of protocol.
-    return int(cursor), [
-        [val, score_cast_func(float(score))] for val, score in zip(it, it)
-    ]
+    pass
 
 
 def parse_zmscore(response, **options):
     # zmscore: list of scores (double precision floating point number) or nil
-    return [float(score) if score is not None else None for score in response]
+    pass
 
 
 def parse_slowlog_get(response, **options):
-    space = " " if options.get("decode_responses", False) else b" "
-
-    def parse_item(item):
-        result = {"id": item[0], "start_time": int(item[1]), "duration": int(item[2])}
-        # Redis Enterprise injects another entry at index [3], which has
-        # the complexity info (i.e. the value N in case the command has
-        # an O(N) complexity) instead of the command.
-        if isinstance(item[3], list):
-            result["command"] = space.join(item[3])
-
-            # These fields are optional, depends on environment.
-            if len(item) >= 6:
-                result["client_address"] = item[4]
-                result["client_name"] = item[5]
-        else:
-            result["complexity"] = item[3]
-            result["command"] = space.join(item[4])
-
-            # These fields are optional, depends on environment.
-            if len(item) >= 7:
-                result["client_address"] = item[5]
-                result["client_name"] = item[6]
-
-        return result
-
-    return [parse_item(item) for item in response]
+    pass
 
 
 def parse_client_trackinginfo(response, **kwargs):
@@ -600,15 +299,7 @@ def parse_client_trackinginfo(response, **kwargs):
     RESP2: flat list [key, val, key, val, ...] → dict
     RESP3: native dict with bytes keys → dict with str keys
     """
-    if isinstance(response, list):
-        data = pairs_to_dict(response, decode_keys=True)
-    else:
-        data = {str_if_bytes(k): v for k, v in response.items()}
-    if "flags" in data:
-        data["flags"] = [str_if_bytes(f) for f in data["flags"]]
-    if "prefixes" in data:
-        data["prefixes"] = [str_if_bytes(p) for p in data["prefixes"]]
-    return data
+    pass
 
 
 def parse_stralgo(response, **options):
@@ -623,21 +314,7 @@ def parse_stralgo(response, **options):
     When WITHMATCHLEN is given, each array representing a match will
     also have the length of the match at the beginning of the array.
     """
-    if options.get("len", False):
-        return int(response)
-    if options.get("idx", False):
-        if options.get("withmatchlen", False):
-            matches = [
-                [(int(match[-1]))] + [list(m) for m in match[:-1]]
-                for match in response[1]
-            ]
-        else:
-            matches = [[list(m) for m in match] for match in response[1]]
-        return {
-            str_if_bytes(response[0]): matches,
-            str_if_bytes(response[2]): int(response[3]),
-        }
-    return str_if_bytes(response)
+    pass
 
 
 def parse_stralgo_resp3(response, **options):
@@ -677,61 +354,19 @@ def parse_cluster_links(response, **options):
     RESP3 returns a list of dicts with bytes keys.
     Both are normalised to ``[{"direction": ..., "node": ..., ...}, ...]``.
     """
-    result = []
-    for item in response:
-        if isinstance(item, dict):
-            result.append({str_if_bytes(k): v for k, v in item.items()})
-        else:
-            result.append(pairs_to_dict(item, decode_keys=True))
-    return result
+    pass
 
 
 def parse_cluster_info(response, **options):
-    response = str_if_bytes(response)
-    return dict(line.split(":") for line in response.splitlines() if line)
+    pass
 
 
 def _parse_node_line(line):
-    line_items = line.split(" ")
-    node_id, addr, flags, master_id, ping, pong, epoch, connected = line.split(" ")[:8]
-    ip = addr.split("@")[0]
-    hostname = addr.split("@")[1].split(",")[1] if "@" in addr and "," in addr else ""
-    node_dict = {
-        "node_id": node_id,
-        "hostname": hostname,
-        "flags": flags,
-        "master_id": master_id,
-        "last_ping_sent": ping,
-        "last_pong_rcvd": pong,
-        "epoch": epoch,
-        "slots": [],
-        "migrations": [],
-        "connected": True if connected == "connected" else False,
-    }
-    if len(line_items) >= 9:
-        slots, migrations = _parse_slots(line_items[8:])
-        node_dict["slots"], node_dict["migrations"] = slots, migrations
-    return ip, node_dict
+    pass
 
 
 def _parse_slots(slot_ranges):
-    slots, migrations = [], []
-    for s_range in slot_ranges:
-        if "->-" in s_range:
-            slot_id, dst_node_id = s_range[1:-1].split("->-", 1)
-            migrations.append(
-                {"slot": slot_id, "node_id": dst_node_id, "state": "migrating"}
-            )
-        elif "-<-" in s_range:
-            slot_id, src_node_id = s_range[1:-1].split("-<-", 1)
-            migrations.append(
-                {"slot": slot_id, "node_id": src_node_id, "state": "importing"}
-            )
-        else:
-            s_range = [sl for sl in s_range.split("-")]
-            slots.append(s_range)
-
-    return slots, migrations
+    pass
 
 
 def parse_cluster_nodes(response, **options):
@@ -739,9 +374,7 @@ def parse_cluster_nodes(response, **options):
     @see: https://redis.io/commands/cluster-nodes  # string / bytes
     @see: https://redis.io/commands/cluster-replicas # list of string / bytes
     """
-    if isinstance(response, (str, bytes)):
-        response = response.splitlines()
-    return dict(_parse_node_line(str_if_bytes(node)) for node in response)
+    pass
 
 
 def parse_geosearch_generic(response, **options):
@@ -749,172 +382,37 @@ def parse_geosearch_generic(response, **options):
     Parse the response of 'GEOSEARCH', GEORADIUS' and 'GEORADIUSBYMEMBER'
     commands according to 'withdist', 'withhash' and 'withcoord' labels.
     """
-    try:
-        if options["store"] or options["store_dist"]:
-            # `store` and `store_dist` cant be combined
-            # with other command arguments.
-            # relevant to 'GEORADIUS' and 'GEORADIUSBYMEMBER'
-            return response
-    except KeyError:  # it means the command was sent via execute_command
-        return response
-
-    if not isinstance(response, list):
-        response_list = [response]
-    else:
-        response_list = response
-
-    if not options["withdist"] and not options["withcoord"] and not options["withhash"]:
-        # just a bunch of places
-        return response_list
-
-    cast = {
-        "withdist": float,
-        "withcoord": lambda ll: [float(ll[0]), float(ll[1])],
-        "withhash": int,
-    }
-
-    # zip all output results with each casting function to get
-    # the properly native Python value.
-    f = [lambda x: x]
-    f += [cast[o] for o in ["withdist", "withhash", "withcoord"] if options[o]]
-    return [list(map(lambda fv: fv[0](fv[1]), zip(f, r))) for r in response_list]
+    pass
 
 
 def parse_command(response, **options):
-    commands = {}
-    for command in response:
-        cmd_dict = {}
-        cmd_name = str_if_bytes(command[0])
-        cmd_dict["name"] = cmd_name
-        cmd_dict["arity"] = int(command[1])
-        cmd_dict["flags"] = {str_if_bytes(flag) for flag in command[2]}
-        cmd_dict["first_key_pos"] = command[3]
-        cmd_dict["last_key_pos"] = command[4]
-        cmd_dict["step_count"] = command[5]
-        if len(command) > 6:
-            cmd_dict["acl_categories"] = {str_if_bytes(c) for c in command[6]}
-        if len(command) > 7:
-            cmd_dict["tips"] = command[7]
-            cmd_dict["key_specifications"] = command[8]
-            cmd_dict["subcommands"] = command[9]
-        commands[cmd_name] = cmd_dict
-    return commands
+    pass
 
 
 def parse_command_resp3(response, **options):
-    commands = {}
-    for command in response:
-        cmd_dict = {}
-        cmd_name = str_if_bytes(command[0])
-        cmd_dict["name"] = cmd_name
-        cmd_dict["arity"] = command[1]
-        cmd_dict["flags"] = {str_if_bytes(flag) for flag in command[2]}
-        cmd_dict["first_key_pos"] = command[3]
-        cmd_dict["last_key_pos"] = command[4]
-        cmd_dict["step_count"] = command[5]
-        cmd_dict["acl_categories"] = {str_if_bytes(c) for c in command[6]}
-        if len(command) > 7:
-            cmd_dict["tips"] = command[7]
-            cmd_dict["key_specifications"] = command[8]
-            cmd_dict["subcommands"] = command[9]
-
-        commands[cmd_name] = cmd_dict
-    return commands
+    pass
 
 
 def parse_pubsub_numsub(response, **options):
-    return list(zip(response[0::2], response[1::2]))
+    pass
 
 
 def parse_client_kill(response, **options):
-    if isinstance(response, int):
-        return response
-    return str_if_bytes(response) == "OK"
+    pass
 
 
 def parse_acl_getuser(response, **options):
-    if response is None:
-        return None
-    if isinstance(response, list):
-        data = pairs_to_dict(response, decode_keys=True)
-    else:
-        data = {str_if_bytes(key): value for key, value in response.items()}
-
-    # convert everything but user-defined data in 'keys' to native strings
-    data["flags"] = list(map(str_if_bytes, data["flags"]))
-    data["passwords"] = list(map(str_if_bytes, data["passwords"]))
-    data["commands"] = str_if_bytes(data["commands"])
-    if isinstance(data["keys"], str) or isinstance(data["keys"], bytes):
-        data["keys"] = list(str_if_bytes(data["keys"]).split(" "))
-    if data["keys"] == [""]:
-        data["keys"] = []
-    if "channels" in data:
-        if isinstance(data["channels"], str) or isinstance(data["channels"], bytes):
-            data["channels"] = list(str_if_bytes(data["channels"]).split(" "))
-        if data["channels"] == [""]:
-            data["channels"] = []
-    if "selectors" in data:
-        if data["selectors"] != [] and isinstance(data["selectors"][0], list):
-            # RESP2: flat list [key, val, key, val] → convert to dict
-            data["selectors"] = [
-                pairs_to_dict(selector, decode_keys=True, decode_string_values=True)
-                for selector in data["selectors"]
-            ]
-        elif data["selectors"] != []:
-            data["selectors"] = [
-                {str_if_bytes(k): str_if_bytes(v) for k, v in selector.items()}
-                for selector in data["selectors"]
-            ]
-
-    # split 'commands' into separate 'categories' and 'commands' lists
-    commands, categories = [], []
-    for command in data["commands"].split(" "):
-        categories.append(command) if "@" in command else commands.append(command)
-
-    data["commands"] = commands
-    data["categories"] = categories
-    data["enabled"] = "on" in data["flags"]
-    return data
+    pass
 
 
 def parse_acl_log(response, **options):
-    if response is None:
-        return None
-    if isinstance(response, list):
-        data = []
-        for log in response:
-            log_data = pairs_to_dict(log, True, True)
-            client_info = log_data.get("client-info", "")
-            log_data["client-info"] = parse_client_info(client_info)
-
-            # float() is lossy comparing to the "double" in C
-            log_data["age-seconds"] = float(log_data["age-seconds"])
-            data.append(log_data)
-    else:
-        data = bool_ok(response)
-    return data
+    pass
 
 
 def parse_acl_log_resp3(response, **options):
     """Parse ACL LOG for RESP3 — normalize to match RESP2 semantic richness.
     Converts age-seconds to float and client-info to parsed dict."""
-    if not isinstance(response, list):
-        return bool_ok(response)
-    data = []
-    for entry in response:
-        log_data = {str_if_bytes(k): v for k, v in entry.items()}
-        # Ensure age-seconds is float
-        if "age-seconds" in log_data:
-            log_data["age-seconds"] = float(log_data["age-seconds"])
-        # Parse client-info string into dict
-        if "client-info" in log_data:
-            log_data["client-info"] = parse_client_info(log_data["client-info"])
-        # Decode remaining string values
-        for key in log_data:
-            if key not in ("age-seconds", "client-info"):
-                log_data[key] = str_if_bytes(log_data[key])
-        data.append(log_data)
-    return data
+    pass
 
 
 def parse_client_info(value):
@@ -922,31 +420,7 @@ def parse_client_info(value):
     Parsing client-info in ACL Log in following format.
     "key1=value1 key2=value2 key3=value3"
     """
-    client_info = {}
-    for info in str_if_bytes(value).strip().split():
-        key, value = info.split("=")
-        client_info[key] = value
-
-    # Those fields are defined as int in networking.c
-    for int_key in {
-        "id",
-        "age",
-        "idle",
-        "db",
-        "sub",
-        "psub",
-        "multi",
-        "qbuf",
-        "qbuf-free",
-        "obl",
-        "argv-mem",
-        "oll",
-        "omem",
-        "tot-mem",
-    }:
-        if int_key in client_info:
-            client_info[int_key] = int(client_info[int_key])
-    return client_info
+    pass
 
 
 def parse_set_result(response, **options):
@@ -956,11 +430,7 @@ def parse_set_result(response, **options):
     - BOOL
     - String when GET argument is used
     """
-    if options.get("get"):
-        # Redis will return a getCommand result.
-        # See `setGenericCommand` in t_string.c
-        return response
-    return response and str_if_bytes(response) == "OK"
+    pass
 
 
 def parse_gcra(response, **options):
@@ -969,13 +439,7 @@ def parse_gcra(response, **options):
 
     Response format: [limited, max_req_num, num_avail_req, retry_after, full_burst_after]
     """
-    return GCRAResponse(
-        limited=bool(response[0]),
-        max_req_num=int(response[1]),
-        num_avail_req=int(response[2]),
-        retry_after=int(response[3]),
-        full_burst_after=int(response[4]),
-    )
+    pass
 
 
 def parse_function_list(response):
@@ -985,17 +449,7 @@ def parse_function_list(response):
     where nested 'functions' values are also flat lists.
     Converts to match RESP3's native dict format.
     """
-    result = []
-    for lib_flat in response:
-        lib_dict = pairs_to_dict(lib_flat)
-        # Convert each function's flat list to a dict.
-        # The key is b"functions" normally, but "functions" when
-        # decode_responses=True.
-        func_key = "functions" if "functions" in lib_dict else b"functions"
-        if func_key in lib_dict:
-            lib_dict[func_key] = [pairs_to_dict(func) for func in lib_dict[func_key]]
-        result.append(lib_dict)
-    return result
+    pass
 
 
 def string_keys_to_dict(key_string, callback):

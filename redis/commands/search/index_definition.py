@@ -33,47 +33,24 @@ class IndexDefinition:
 
     def _append_index_type(self, index_type):
         """Append `ON HASH` or `ON JSON` according to the enum."""
-        if index_type is IndexType.HASH:
-            self.args.extend(["ON", "HASH"])
-        elif index_type is IndexType.JSON:
-            self.args.extend(["ON", "JSON"])
-        elif index_type is not None:
-            raise RuntimeError(f"index_type must be one of {list(IndexType)}")
+        pass
 
     def _append_prefix(self, prefix):
         """Append PREFIX."""
-        if len(prefix) > 0:
-            self.args.append("PREFIX")
-            self.args.append(len(prefix))
-            for p in prefix:
-                self.args.append(p)
+        pass
 
     def _append_filter(self, filter):
         """Append FILTER."""
-        if filter is not None:
-            self.args.append("FILTER")
-            self.args.append(filter)
+        pass
 
     def _append_language(self, language_field, language):
         """Append LANGUAGE_FIELD and LANGUAGE."""
-        if language_field is not None:
-            self.args.append("LANGUAGE_FIELD")
-            self.args.append(language_field)
-        if language is not None:
-            self.args.append("LANGUAGE")
-            self.args.append(language)
+        pass
 
     def _append_score(self, score_field, score):
         """Append SCORE_FIELD and SCORE."""
-        if score_field is not None:
-            self.args.append("SCORE_FIELD")
-            self.args.append(score_field)
-        if score is not None:
-            self.args.append("SCORE")
-            self.args.append(score)
+        pass
 
     def _append_payload(self, payload_field):
         """Append PAYLOAD_FIELD."""
-        if payload_field is not None:
-            self.args.append("PAYLOAD_FIELD")
-            self.args.append(payload_field)
+        pass

@@ -45,19 +45,19 @@ class BaseDatabase(AbstractDatabase):
 
     @property
     def weight(self) -> float:
-        return self._weight
+        pass
 
     @weight.setter
     def weight(self, weight: float):
-        self._weight = weight
+        pass
 
     @property
     def health_check_url(self) -> Optional[str]:
-        return self._health_check_url
+        pass
 
     @health_check_url.setter
     def health_check_url(self, health_check_url: Optional[str]):
-        self._health_check_url = health_check_url
+        pass
 
 
 class SyncDatabase(AbstractDatabase):
@@ -115,19 +115,19 @@ class Database(BaseDatabase, SyncDatabase):
 
     @property
     def client(self) -> Union[redis.Redis, RedisCluster]:
-        return self._client
+        pass
 
     @client.setter
     def client(self, client: Union[redis.Redis, RedisCluster]):
-        self._client = client
+        pass
 
     @property
     def circuit(self) -> CircuitBreaker:
-        return self._cb
+        pass
 
     @circuit.setter
     def circuit(self, circuit: CircuitBreaker):
-        self._cb = circuit
+        pass
 
     def __repr__(self):
         return f"Database(client={self.client}, weight={self.weight})"

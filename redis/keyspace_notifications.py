@@ -376,8 +376,7 @@ class KeyNotification:
 
     def key_starts_with(self, prefix: str | bytes) -> bool:
         """Check if the key starts with the given prefix."""
-        prefix = safe_str(prefix)
-        return self.key.startswith(prefix)
+        pass
 
 
 # =============================================================================
@@ -430,12 +429,12 @@ class KeyspaceChannel:
         self._channel_str = self._build_channel_string()
 
     def _build_channel_string(self) -> str:
-        return f"{self.PREFIX}{self.db}__:{self.key_or_pattern}"
+        pass
 
     @property
     def is_pattern(self) -> bool:
         """Check if this channel contains wildcards and should use psubscribe."""
-        return _is_pattern(self.key_or_pattern)
+        pass
 
     def __str__(self) -> str:
         return self._channel_str
@@ -498,12 +497,12 @@ class KeyeventChannel:
         self._channel_str = self._build_channel_string()
 
     def _build_channel_string(self) -> str:
-        return f"{self.PREFIX}{self.db}__:{self.event}"
+        pass
 
     @property
     def is_pattern(self) -> bool:
         """Check if this channel contains wildcards and should use psubscribe."""
-        return _is_pattern(self.event)
+        pass
 
     @classmethod
     def all_events(cls, db: int = 0) -> "KeyeventChannel":
@@ -523,7 +522,7 @@ class KeyeventChannel:
             >>> str(channel)
             '__keyevent@0__:*'
         """
-        return cls("*", db=db)
+        pass
 
     def __str__(self) -> str:
         return self._channel_str
@@ -587,12 +586,7 @@ def get_channel_type(channel: str | bytes) -> ChannelType | None:
         >>> get_channel_type(b"__keyspace@0__:mykey")
         ChannelType.KEYSPACE
     """
-    channel_str = safe_str(channel)
-    if channel_str.startswith(KeyspaceChannel.PREFIX):
-        return ChannelType.KEYSPACE
-    if channel_str.startswith(KeyeventChannel.PREFIX):
-        return ChannelType.KEYEVENT
-    return None
+    pass
 
 
 def _is_pattern(
@@ -803,11 +797,7 @@ class AbstractKeyspaceNotifications(KeyspaceNotificationsInterface):
             key_prefix = self.key_prefix
 
             def _wrap_handler(message):
-                notification = KeyNotification.from_message(
-                    message, key_prefix=key_prefix
-                )
-                if notification is not None:
-                    handler(notification)
+                pass
 
             wrapped_handler = _wrap_handler
 
@@ -927,8 +917,7 @@ class AbstractKeyspaceNotifications(KeyspaceNotificationsInterface):
             >>> ksn.subscribe_keyspace("user:123", db=0)
             >>> ksn.subscribe_keyspace("user:*", db=0)
         """
-        channel = KeyspaceChannel(key_or_pattern, db=db)
-        self.subscribe(channel, handler=handler)
+        pass
 
     def subscribe_keyevent(
         self,
@@ -948,8 +937,7 @@ class AbstractKeyspaceNotifications(KeyspaceNotificationsInterface):
             >>> ksn.subscribe_keyevent(EventType.SET)
             >>> ksn.subscribe_keyevent(EventType.EXPIRED, handler=my_handler)
         """
-        channel = KeyeventChannel(event, db=db)
-        self.subscribe(channel, handler=handler)
+        pass
 
     def __enter__(self):
         return self
@@ -1216,7 +1204,7 @@ class KeyspaceNotifications(AbstractKeyspaceNotifications):
     @property
     def subscribed(self) -> bool:
         """Check if there are any active subscriptions and not closed."""
-        return not self._closed and self._pubsub.subscribed
+        pass
 
     def _validate_all_handlers(self) -> None:
         """Raise if any subscription in the underlying PubSub lacks a handler."""
@@ -1291,9 +1279,7 @@ class ClusterKeyspaceNotifications(AbstractKeyspaceNotifications):
     @property
     def subscribed(self) -> bool:
         """Check if there are any active subscriptions and not closed."""
-        return not self._closed and bool(
-            self._subscribed_patterns or self._subscribed_channels
-        )
+        pass
 
     def _track_subscribe(
         self, patterns: dict[str, Any], exact_channels: dict[str, Any]

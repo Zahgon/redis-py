@@ -50,7 +50,7 @@ class InitialHealthCheck(Enum):
 
 
 def default_event_dispatcher() -> EventDispatcherInterface:
-    return EventDispatcher()
+    pass
 
 
 @dataclass
@@ -88,8 +88,7 @@ class DatabaseConfig:
     health_check_url: Optional[str] = None
 
     def default_circuit_breaker(self) -> CircuitBreaker:
-        circuit_breaker = pybreaker.CircuitBreaker(reset_timeout=self.grace_period)
-        return PBCircuitBreakerAdapter(circuit_breaker)
+        pass
 
 
 @dataclass
@@ -162,70 +161,13 @@ class MultiDbConfig:
     initial_health_check_policy: InitialHealthCheck = InitialHealthCheck.ALL_AVAILABLE
 
     def databases(self) -> Databases:
-        databases = WeightedList()
-
-        for database_config in self.databases_config:
-            # The retry object is not used in the lower level clients, so we can safely remove it.
-            # We rely on command_retry in terms of global retries.
-            database_config.client_kwargs["retry"] = Retry(
-                retries=0, backoff=NoBackoff()
-            )
-
-            # Maintenance notifications are disabled by default in underlying clients,
-            # but user can override this by providing their own config.
-            if "maint_notifications_config" not in database_config.client_kwargs:
-                database_config.client_kwargs["maint_notifications_config"] = (
-                    MaintNotificationsConfig(enabled=False)
-                )
-
-            if database_config.from_url:
-                client = self.client_class.from_url(
-                    database_config.from_url, **database_config.client_kwargs
-                )
-            elif database_config.from_pool:
-                database_config.from_pool.set_retry(
-                    Retry(retries=0, backoff=NoBackoff())
-                )
-                client = self.client_class.from_pool(
-                    connection_pool=database_config.from_pool
-                )
-            else:
-                client = self.client_class(**database_config.client_kwargs)
-
-            circuit = (
-                database_config.default_circuit_breaker()
-                if database_config.circuit is None
-                else database_config.circuit
-            )
-            databases.add(
-                Database(
-                    client=client,
-                    circuit=circuit,
-                    weight=database_config.weight,
-                    health_check_url=database_config.health_check_url,
-                ),
-                database_config.weight,
-            )
-
-        return databases
+        pass
 
     def default_failure_detectors(self) -> List[FailureDetector]:
-        return [
-            CommandFailureDetector(
-                min_num_failures=self.min_num_failures,
-                failure_rate_threshold=self.failure_rate_threshold,
-                failure_detection_window=self.failures_detection_window,
-            ),
-        ]
+        pass
 
     def default_health_checks(self) -> List[HealthCheck]:
-        return [
-            PingHealthCheck(
-                health_check_probes=self.health_check_probes,
-                health_check_delay=self.health_check_delay,
-                health_check_timeout=self.health_check_timeout,
-            ),
-        ]
+        pass
 
     def default_failover_strategy(self) -> FailoverStrategy:
-        return WeightBasedFailoverStrategy()
+        pass

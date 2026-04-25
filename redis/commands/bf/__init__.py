@@ -52,9 +52,7 @@ class AbstractBloom:
     @staticmethod
     def append_weights(params, weights):
         """Append WEIGHTS to params."""
-        if len(weights) > 0:
-            params.append("WEIGHTS")
-            params += weights
+        pass
 
     @staticmethod
     def append_no_create(params, noCreate):
@@ -65,28 +63,22 @@ class AbstractBloom:
     @staticmethod
     def append_items_and_increments(params, items, increments):
         """Append pairs of items and increments to params."""
-        for i in range(len(items)):
-            params.append(items[i])
-            params.append(increments[i])
+        pass
 
     @staticmethod
     def append_values_and_weights(params, items, weights):
         """Append pairs of items and weights to params."""
-        for i in range(len(items)):
-            params.append(items[i])
-            params.append(weights[i])
+        pass
 
     @staticmethod
     def append_max_iterations(params, max_iterations):
         """Append MAXITERATIONS to params."""
-        if max_iterations is not None:
-            params.extend(["MAXITERATIONS", max_iterations])
+        pass
 
     @staticmethod
     def append_bucket_size(params, bucket_size):
         """Append BUCKETSIZE to params."""
-        if bucket_size is not None:
-            params.extend(["BUCKETSIZE", bucket_size])
+        pass
 
 
 class _CMSBloomBase(CMSCommands, AbstractBloom):

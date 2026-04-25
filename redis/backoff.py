@@ -180,4 +180,4 @@ class ExponentialWithJitterBackoff(AbstractBackoff):
 
 
 def default_backoff():
-    return EqualJitterBackoff()
+    pass

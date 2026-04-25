@@ -17,7 +17,7 @@ class SentinelCommands:
 
     def sentinel(self, *args):
         """Redis Sentinel's SENTINEL command."""
-        warnings.warn(DeprecationWarning("Use the individual sentinel_* methods"))
+        pass
 
     @overload
     def sentinel_get_master_addr_by_name(
@@ -40,12 +40,7 @@ class SentinelCommands:
         Returns a (host, port) pair for the given ``service_name`` when return_responses is True,
         otherwise returns a boolean value that indicates if the command was successful.
         """
-        return self.execute_command(
-            "SENTINEL GET-MASTER-ADDR-BY-NAME",
-            service_name,
-            once=True,
-            return_responses=return_responses,
-        )
+        pass
 
     @overload
     def sentinel_master(
@@ -68,9 +63,7 @@ class SentinelCommands:
         Returns a dictionary containing the specified masters state, when return_responses is True,
         otherwise returns a boolean value that indicates if the command was successful.
         """
-        return self.execute_command(
-            "SENTINEL MASTER", service_name, return_responses=return_responses
-        )
+        pass
 
     @overload
     def sentinel_masters(self: SyncClientProtocol) -> SentinelMastersResponse: ...
@@ -90,7 +83,7 @@ class SentinelCommands:
         called directly on the Redis standalone client for sentinels,
         so it doesn't support the "once" and "return_responses" options.
         """
-        return self.execute_command("SENTINEL MASTERS")
+        pass
 
     @overload
     def sentinel_monitor(self: SyncClientProtocol, name, ip, port, quorum) -> bool: ...
@@ -102,7 +95,7 @@ class SentinelCommands:
 
     def sentinel_monitor(self, name, ip, port, quorum) -> bool | Awaitable[bool]:
         """Add a new master to Sentinel to be monitored"""
-        return self.execute_command("SENTINEL MONITOR", name, ip, port, quorum)
+        pass
 
     @overload
     def sentinel_remove(self: SyncClientProtocol, name) -> bool: ...
@@ -112,7 +105,7 @@ class SentinelCommands:
 
     def sentinel_remove(self, name) -> bool | Awaitable[bool]:
         """Remove a master from Sentinel's monitoring"""
-        return self.execute_command("SENTINEL REMOVE", name)
+        pass
 
     @overload
     def sentinel_sentinels(
@@ -135,9 +128,7 @@ class SentinelCommands:
         Returns a list of sentinels for ``service_name``, when return_responses is True,
         otherwise returns a boolean value that indicates if the command was successful.
         """
-        return self.execute_command(
-            "SENTINEL SENTINELS", service_name, return_responses=return_responses
-        )
+        pass
 
     @overload
     def sentinel_set(self: SyncClientProtocol, name, option, value) -> bool: ...
@@ -149,7 +140,7 @@ class SentinelCommands:
 
     def sentinel_set(self, name, option, value) -> bool | Awaitable[bool]:
         """Set Sentinel monitoring parameters for a given master"""
-        return self.execute_command("SENTINEL SET", name, option, value)
+        pass
 
     @overload
     def sentinel_slaves(
@@ -172,7 +163,7 @@ class SentinelCommands:
         called directly on the Redis standalone client for sentinels,
         so it doesn't support the "once" and "return_responses" options.
         """
-        return self.execute_command("SENTINEL SLAVES", service_name)
+        pass
 
     @overload
     def sentinel_reset(self: SyncClientProtocol, pattern) -> bool: ...
@@ -189,7 +180,7 @@ class SentinelCommands:
         failover in progress), and removes every slave and sentinel already
         discovered and associated with the master.
         """
-        return self.execute_command("SENTINEL RESET", pattern, once=True)
+        pass
 
     @overload
     def sentinel_failover(self: SyncClientProtocol, new_master_name) -> bool: ...
@@ -206,7 +197,7 @@ class SentinelCommands:
         configuration will be published so that the other Sentinels will
         update their configurations).
         """
-        return self.execute_command("SENTINEL FAILOVER", new_master_name)
+        pass
 
     @overload
     def sentinel_ckquorum(self: SyncClientProtocol, new_master_name) -> bool: ...
@@ -225,7 +216,7 @@ class SentinelCommands:
         This command should be used in monitoring systems to check if a
         Sentinel deployment is ok.
         """
-        return self.execute_command("SENTINEL CKQUORUM", new_master_name, once=True)
+        pass
 
     @overload
     def sentinel_flushconfig(self: SyncClientProtocol) -> bool: ...
@@ -249,10 +240,10 @@ class SentinelCommands:
         This command works even if the previous configuration file is
         completely missing.
         """
-        return self.execute_command("SENTINEL FLUSHCONFIG")
+        pass
 
 
 class AsyncSentinelCommands(SentinelCommands):
     async def sentinel(self, *args) -> None:
         """Redis Sentinel's SENTINEL command."""
-        super().sentinel(*args)
+        pass

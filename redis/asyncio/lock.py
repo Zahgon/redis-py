@@ -158,14 +158,7 @@ class Lock:
         self.register_scripts()
 
     def register_scripts(self):
-        cls = self.__class__
-        client = self.redis
-        if cls.lua_release is None:
-            cls.lua_release = client.register_script(cls.LUA_RELEASE_SCRIPT)
-        if cls.lua_extend is None:
-            cls.lua_extend = client.register_script(cls.LUA_EXTEND_SCRIPT)
-        if cls.lua_reacquire is None:
-            cls.lua_reacquire = client.register_script(cls.LUA_REACQUIRE_SCRIPT)
+        pass
 
     async def __aenter__(self):
         if await self.acquire():
@@ -251,17 +244,7 @@ class Lock:
         """
         Returns True if this key is locked by this lock, otherwise False.
         """
-        stored_token = await self.redis.get(self.name)
-        # need to always compare bytes to bytes
-        # TODO: this can be simplified when the context manager is finished
-        if stored_token and not isinstance(stored_token, bytes):
-            try:
-                encoder = self.redis.connection_pool.get_encoder()
-            except AttributeError:
-                # Cluster
-                encoder = self.redis.get_encoder()
-            stored_token = encoder.encode(stored_token)
-        return self.local.token is not None and stored_token == self.local.token
+        pass
 
     async def release(self) -> None:
         """Releases the already acquired lock.
@@ -328,18 +311,7 @@ class Lock:
         """
         Resets a TTL of an already acquired lock back to a timeout value.
         """
-        if self.local.token is None:
-            raise LockError("Cannot reacquire an unlocked lock")
-        if self.timeout is None:
-            raise LockError("Cannot reacquire a lock with no timeout")
-        return self.do_reacquire()
+        pass
 
     async def do_reacquire(self) -> Literal[True]:
-        timeout = int(self.timeout * 1000)
-        if not bool(
-            await self.lua_reacquire(
-                keys=[self.name], args=[self.local.token, timeout], client=self.redis
-            )
-        ):
-            raise LockNotOwnedError("Cannot reacquire a lock that's no longer owned")
-        return True
+        pass

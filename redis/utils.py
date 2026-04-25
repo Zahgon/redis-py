@@ -81,14 +81,7 @@ def decode_field_value(value, key=None, field_encodings=None):
       encoding is used (``None`` means keep raw bytes).
     - Otherwise falls back to :func:`str_if_bytes`.
     """
-    if not isinstance(value, bytes):
-        return value
-    if field_encodings and key is not None and key in field_encodings:
-        encoding = field_encodings[key]
-        if encoding is None:
-            return value
-        return value.decode(encoding, "replace")
-    return str_if_bytes(value)
+    pass
 
 
 def dict_merge(*dicts: Mapping[str, Any]) -> Dict[str, Any]:
@@ -118,13 +111,7 @@ def merge_result(command, res):
 
     res : 'dict'
     """
-    result = set()
-
-    for v in res.values():
-        for value in v:
-            result.add(value)
-
-    return list(result)
+    pass
 
 
 def warn_deprecated(name, reason="", version="", stacklevel=2):
@@ -144,22 +131,7 @@ def deprecated_function(reason="", version="", name=None):
     """
 
     def decorator(func):
-        if inspect.iscoroutinefunction(func):
-            # Create async wrapper for async functions
-            @wraps(func)
-            async def async_wrapper(*args, **kwargs):
-                warn_deprecated(name or func.__name__, reason, version, stacklevel=3)
-                return await func(*args, **kwargs)
-
-            return async_wrapper
-        else:
-            # Create regular wrapper for sync functions
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                warn_deprecated(name or func.__name__, reason, version, stacklevel=3)
-                return func(*args, **kwargs)
-
-            return wrapper
+        pass
 
     return decorator
 
@@ -236,24 +208,7 @@ def deprecated_args(
                 )
 
     def decorator(func: C) -> C:
-        if inspect.iscoroutinefunction(func):
-
-            @wraps(func)
-            async def async_wrapper(*args, **kwargs):
-                filterable_args = _get_filterable_args(func, args, kwargs, allowed_args)
-                _check_deprecated_args(func, filterable_args)
-                return await func(*args, **kwargs)
-
-            return async_wrapper
-        else:
-
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                filterable_args = _get_filterable_args(func, args, kwargs, allowed_args)
-                _check_deprecated_args(func, filterable_args)
-                return func(*args, **kwargs)
-
-            return wrapper
+        pass
 
     return decorator
 
@@ -263,12 +218,7 @@ def _set_info_logger():
     Set up a logger that log info logs to stdout.
     (This is used by the default push response handler)
     """
-    if "push_response" not in logging.root.manager.loggerDict.keys():
-        logger = logging.getLogger("push_response")
-        logger.setLevel(logging.INFO)
-        handler = logging.StreamHandler()
-        handler.setLevel(logging.INFO)
-        logger.addHandler(handler)
+    pass
 
 
 def check_protocol_version(
@@ -285,11 +235,7 @@ def check_protocol_version(
 
 
 def get_lib_version():
-    try:
-        libver = metadata.version("redis")
-    except metadata.PackageNotFoundError:
-        libver = "99.99.99"
-    return libver
+    pass
 
 
 def format_error_message(host_error: str, exception: BaseException) -> str:
@@ -349,35 +295,7 @@ def extract_expire_flags(
     exat: Optional[AbsExpiryT] = None,
     pxat: Optional[AbsExpiryT] = None,
 ) -> List[EncodableT]:
-    exp_options: list[EncodableT] = []
-    if ex is not None:
-        exp_options.append("EX")
-        if isinstance(ex, datetime.timedelta):
-            exp_options.append(int(ex.total_seconds()))
-        elif isinstance(ex, int):
-            exp_options.append(ex)
-        elif isinstance(ex, str) and ex.isdigit():
-            exp_options.append(int(ex))
-        else:
-            raise DataError("ex must be datetime.timedelta or int")
-    elif px is not None:
-        exp_options.append("PX")
-        if isinstance(px, datetime.timedelta):
-            exp_options.append(int(px.total_seconds() * 1000))
-        elif isinstance(px, int):
-            exp_options.append(px)
-        else:
-            raise DataError("px must be datetime.timedelta or int")
-    elif exat is not None:
-        if isinstance(exat, datetime.datetime):
-            exat = int(exat.timestamp())
-        exp_options.extend(["EXAT", exat])
-    elif pxat is not None:
-        if isinstance(pxat, datetime.datetime):
-            pxat = int(pxat.timestamp() * 1000)
-        exp_options.extend(["PXAT", pxat])
-
-    return exp_options
+    pass
 
 
 def truncate_text(txt, max_length=100):
@@ -404,19 +322,7 @@ def experimental(cls):
     """
     Decorator to mark a class as experimental.
     """
-    original_init = cls.__init__
-
-    @wraps(original_init)
-    def new_init(self, *args, **kwargs):
-        warnings.warn(
-            f"{cls.__name__} is an experimental and may change or be removed in future versions.",
-            category=UserWarning,
-            stacklevel=2,
-        )
-        original_init(self, *args, **kwargs)
-
-    cls.__init__ = new_init
-    return cls
+    pass
 
 
 def warn_experimental(name, stacklevel=2):
@@ -436,22 +342,7 @@ def experimental_method() -> Callable[[C], C]:
     """
 
     def decorator(func: C) -> C:
-        if inspect.iscoroutinefunction(func):
-            # Create async wrapper for async functions
-            @wraps(func)
-            async def async_wrapper(*args, **kwargs):
-                warn_experimental(func.__name__, stacklevel=2)
-                return await func(*args, **kwargs)
-
-            return async_wrapper
-        else:
-            # Create regular wrapper for sync functions
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                warn_experimental(func.__name__, stacklevel=2)
-                return func(*args, **kwargs)
-
-            return wrapper
+        pass
 
     return decorator
 
@@ -491,25 +382,6 @@ def experimental_args(
                 warn_experimental_arg_usage(arg, func.__name__, stacklevel=4)
 
     def decorator(func: C) -> C:
-        if inspect.iscoroutinefunction(func):
-
-            @wraps(func)
-            async def async_wrapper(*args, **kwargs):
-                filterable_args = _get_filterable_args(func, args, kwargs)
-                if len(filterable_args) > 0:
-                    _check_experimental_args(func, filterable_args)
-                return await func(*args, **kwargs)
-
-            return async_wrapper
-        else:
-
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                filterable_args = _get_filterable_args(func, args, kwargs)
-                if len(filterable_args) > 0:
-                    _check_experimental_args(func, filterable_args)
-                return func(*args, **kwargs)
-
-            return wrapper
+        pass
 
     return decorator

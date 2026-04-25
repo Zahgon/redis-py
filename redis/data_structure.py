@@ -42,12 +42,7 @@ class WeightedList(Generic[T]):
         self, min_weight: float, max_weight: float
     ) -> List[tuple[Any, Number]]:
         """Get all items within weight range"""
-        with self._lock:
-            result = []
-            for item, weight in self._items:
-                if min_weight <= weight <= max_weight:
-                    result.append((item, weight))
-            return result
+        pass
 
     def get_top_n(self, n: int) -> List[tuple[Any, Number]]:
         """Get top N the highest weighted items"""
@@ -55,11 +50,7 @@ class WeightedList(Generic[T]):
             return [(item, weight) for item, weight in self._items[:n]]
 
     def update_weight(self, item, new_weight: float):
-        with self._lock:
-            """Update weight of an item"""
-            old_weight = self.remove(item)
-            self.add(item, new_weight)
-            return old_weight
+        pass
 
     def __iter__(self):
         """Iterate in descending weight order"""

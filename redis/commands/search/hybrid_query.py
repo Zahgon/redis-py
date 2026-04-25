@@ -38,7 +38,7 @@ class HybridSearchQuery:
 
     def query_string(self) -> str:
         """Return the query string of this query object."""
-        return self._query_string
+        pass
 
     def scorer(self, scorer: str) -> "HybridSearchQuery":
         """
@@ -49,15 +49,13 @@ class HybridSearchQuery:
         For more information about supported scoring algorithms,
         see https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/scoring/
         """
-        self._scorer = scorer
-        return self
+        pass
 
     def yield_score_as(self, alias: str) -> "HybridSearchQuery":
         """
         Yield the score as a field.
         """
-        self._yield_score_as = alias
-        return self
+        pass
 
     def get_args(self) -> List[str]:
         args = ["SEARCH", self._query_string]
@@ -117,11 +115,11 @@ class HybridVsimQuery:
 
     def vector_field(self) -> str:
         """Return the vector field name of this query object."""
-        return self._vector_field
+        pass
 
     def vector_data(self) -> Union[bytes, str]:
         """Return the vector data of this query object."""
-        return self._vector_data
+        pass
 
     def vsim_method_params(
         self,
@@ -136,14 +134,7 @@ class HybridVsimQuery:
             kwargs: Search method parameters. Use the param names for keys and the
                 values for the values. Example: {"K": 10, "EF_RUNTIME": 100}.
         """
-        vsim_method_params: List[Union[str, int]] = [method.value]
-        if kwargs:
-            vsim_method_params.append(len(kwargs.items()) * 2)
-            for key, value in kwargs.items():
-                vsim_method_params.extend((key, value))
-        self._vsim_method_params = vsim_method_params
-
-        return self
+        pass
 
     def filter(self, flt: "HybridFilter") -> "HybridVsimQuery":
         """
@@ -152,15 +143,13 @@ class HybridVsimQuery:
         Args:
             flt: A HybridFilter object, used on a corresponding field.
         """
-        self._filter = flt
-        return self
+        pass
 
     def yield_score_as(self, alias: str) -> "HybridVsimQuery":
         """
         Return the score as a field with name `alias`.
         """
-        self._yield_score_as = alias
-        return self
+        pass
 
     def get_args(self) -> List[str]:
         args = ["VSIM", self._vector_field, self._vector_data]
@@ -204,14 +193,11 @@ class HybridQuery:
         - **decode_field**: Whether to decode the field from bytes to string
         - **encoding**: The encoding to use when decoding the field
         """
-        self._return_fields_decode_as[field] = encoding if decode_field else None
-        return self
+        pass
 
     def return_fields(self, *fields: str) -> "HybridQuery":
         """Add fields with default decoding preferences."""
-        for field in fields:
-            self.return_field(field)
-        return self
+        pass
 
     def get_args(self) -> List[str]:
         args = []
@@ -277,11 +263,7 @@ class HybridPostProcessingConfig:
         """
         Add load statement parameters to the query.
         """
-        if fields:
-            fields_str = " ".join(fields)
-            fields_list = fields_str.split(" ")
-            self._load_statements.extend(("LOAD", len(fields_list), *fields_list))
-        return self
+        pass
 
     def group_by(self, fields: List[str], *reducers: Reducer) -> Self:
         """
@@ -293,18 +275,7 @@ class HybridPostProcessingConfig:
             reducers: One or more reducers. Reducers may be found in the
                 `aggregation` module.
         """
-
-        fields = [fields] if isinstance(fields, str) else fields
-
-        ret = ["GROUPBY", str(len(fields)), *fields]
-        for reducer in reducers:
-            ret.extend(("REDUCE", reducer.NAME, str(len(reducer.args))))
-            ret.extend(reducer.args)
-            if reducer._alias is not None:
-                ret.extend(("AS", reducer._alias))
-
-        self._groupby_statements.extend(ret)
-        return self
+        pass
 
     def apply(self, **kwexpr) -> Self:
         """
@@ -315,23 +286,13 @@ class HybridPostProcessingConfig:
                 the alias for the projection, and the value is the projection
                 expression itself, for example `apply(square_root="sqrt(@foo)")`.
         """
-        apply_args = []
-        for alias, expr in kwexpr.items():
-            ret = ["APPLY", expr]
-            if alias is not None:
-                ret.extend(("AS", alias))
-            apply_args.extend(ret)
-
-        self._apply_statements.extend(apply_args)
-
-        return self
+        pass
 
     def sort_by(self, *sortby: "SortbyField") -> Self:
         """
         Add sortby parameters to the query.
         """
-        self._sortby_fields = [*sortby]
-        return self
+        pass
 
     def filter(self, filter: "HybridFilter") -> Self:
         """
@@ -342,35 +303,16 @@ class HybridPostProcessingConfig:
         Args:
             filter: A NumericFilter or GeoFilter object, used on a corresponding field.
         """
-        self._filter = filter
-        return self
+        pass
 
     def limit(self, offset: int, num: int) -> Self:
         """
         Add limit parameters to the query.
         """
-        self._limit = Limit(offset, num)
-        return self
+        pass
 
     def build_args(self) -> List[str]:
-        args = []
-        if self._load_statements:
-            args.extend(self._load_statements)
-        if self._groupby_statements:
-            args.extend(self._groupby_statements)
-        if self._apply_statements:
-            args.extend(self._apply_statements)
-        if self._sortby_fields:
-            sortby_args = []
-            for f in self._sortby_fields:
-                sortby_args.extend(f.args)
-            args.extend(("SORTBY", len(sortby_args), *sortby_args))
-        if self._filter:
-            args.extend(self._filter.args)
-        if self._limit:
-            args.extend(self._limit.build_args())
-
-        return args
+        pass
 
 
 @experimental
@@ -403,9 +345,4 @@ class HybridCursorQuery:
         self.max_idle = max_idle
 
     def build_args(self):
-        args = ["WITHCURSOR"]
-        if self.count:
-            args += ["COUNT", str(self.count)]
-        if self.max_idle:
-            args += ["MAXIDLE", str(self.max_idle)]
-        return args
+        pass

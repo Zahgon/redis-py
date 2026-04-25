@@ -37,69 +37,37 @@ class RedisModuleCommands:
 
     def ft(self, index_name="idx") -> Search:
         """Access the search namespace, providing support for redis search."""
-
-        from .search import Search
-
-        s = Search(client=self, index_name=index_name)
-        return s
+        pass
 
     def ts(self) -> TimeSeries:
         """Access the timeseries namespace, providing support for
         redis timeseries data.
         """
-
-        from .timeseries import TimeSeries
-
-        s = TimeSeries(client=self)
-        return s
+        pass
 
     def bf(self) -> BFBloom:
         """Access the bloom namespace."""
-
-        from .bf import BFBloom
-
-        bf = BFBloom(client=self)
-        return bf
+        pass
 
     def cf(self) -> CFBloom:
         """Access the bloom namespace."""
-
-        from .bf import CFBloom
-
-        cf = CFBloom(client=self)
-        return cf
+        pass
 
     def cms(self) -> CMSBloom:
         """Access the bloom namespace."""
-
-        from .bf import CMSBloom
-
-        cms = CMSBloom(client=self)
-        return cms
+        pass
 
     def topk(self) -> TOPKBloom:
         """Access the bloom namespace."""
-
-        from .bf import TOPKBloom
-
-        topk = TOPKBloom(client=self)
-        return topk
+        pass
 
     def tdigest(self) -> TDigestBloom:
         """Access the bloom namespace."""
-
-        from .bf import TDigestBloom
-
-        tdigest = TDigestBloom(client=self)
-        return tdigest
+        pass
 
     def vset(self) -> VectorSet:
         """Access the VectorSet commands namespace."""
-
-        from .vectorset import VectorSet
-
-        vset = VectorSet(client=self)
-        return vset
+        pass
 
 
 class AsyncRedisModuleCommands(RedisModuleCommands):
@@ -113,66 +81,34 @@ class AsyncRedisModuleCommands(RedisModuleCommands):
 
     def ft(self, index_name="idx") -> AsyncSearch:
         """Access the search namespace, providing support for redis search."""
-
-        from .search import AsyncSearch
-
-        s = AsyncSearch(client=self, index_name=index_name)
-        return s
+        pass
 
     def ts(self) -> AsyncTimeSeries:
         """Access the timeseries namespace, providing support for
         redis timeseries data.
         """
-
-        from .timeseries import AsyncTimeSeries
-
-        s = AsyncTimeSeries(client=self)
-        return s
+        pass
 
     def bf(self) -> AsyncBFBloom:
         """Access the bloom namespace."""
-
-        from .bf import AsyncBFBloom
-
-        bf = AsyncBFBloom(client=self)
-        return bf
+        pass
 
     def cf(self) -> AsyncCFBloom:
         """Access the bloom namespace."""
-
-        from .bf import AsyncCFBloom
-
-        cf = AsyncCFBloom(client=self)
-        return cf
+        pass
 
     def cms(self) -> AsyncCMSBloom:
         """Access the bloom namespace."""
-
-        from .bf import AsyncCMSBloom
-
-        cms = AsyncCMSBloom(client=self)
-        return cms
+        pass
 
     def topk(self) -> AsyncTOPKBloom:
         """Access the bloom namespace."""
-
-        from .bf import AsyncTOPKBloom
-
-        topk = AsyncTOPKBloom(client=self)
-        return topk
+        pass
 
     def tdigest(self) -> AsyncTDigestBloom:
         """Access the bloom namespace."""
-
-        from .bf import AsyncTDigestBloom
-
-        tdigest = AsyncTDigestBloom(client=self)
-        return tdigest
+        pass
 
     def vset(self) -> AsyncVectorSet:
         """Access the VectorSet commands namespace."""
-
-        from .vectorset import AsyncVectorSet
-
-        vset = AsyncVectorSet(client=self)
-        return vset
+        pass

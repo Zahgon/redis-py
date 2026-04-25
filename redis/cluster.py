@@ -111,47 +111,17 @@ def get_connection(redis_node: Redis, *args, **options) -> Connection:
 
 
 def parse_scan_result(command, res, **options):
-    cursors = {}
-    ret = []
-    for node_name, response in res.items():
-        cursor, r = parse_scan(response, **options)
-        cursors[node_name] = cursor
-        ret += r
-
-    return cursors, ret
+    pass
 
 
 def parse_pubsub_numsub(command, res, **options):
-    numsub_d = OrderedDict()
-    for numsub_tups in res.values():
-        for channel, numsubbed in numsub_tups:
-            try:
-                numsub_d[channel] += numsubbed
-            except KeyError:
-                numsub_d[channel] = numsubbed
-
-    ret_numsub = [(channel, numsub) for channel, numsub in numsub_d.items()]
-    return ret_numsub
+    pass
 
 
 def parse_cluster_slots(
     resp: Any, **options: Any
 ) -> Dict[Tuple[int, int], Dict[str, Any]]:
-    current_host = options.get("current_host", "")
-
-    def fix_server(*args: Any) -> Tuple[str, Any]:
-        return str_if_bytes(args[0]) or current_host, args[1]
-
-    slots = {}
-    for slot in resp:
-        start, end, primary = slot[:3]
-        replicas = slot[3:]
-        slots[start, end] = {
-            "primary": fix_server(*primary),
-            "replicas": [fix_server(*replica) for replica in replicas],
-        }
-
-    return slots
+    pass
 
 
 def parse_cluster_shards(resp, **options):
@@ -162,45 +132,14 @@ def parse_cluster_shards(resp, **options):
     of protocol version (RESP2 returns bytes keys for node attributes,
     RESP3 returns bytes keys at every level).
     """
-    if isinstance(resp[0], dict):
-        # RESP3 – native dicts with bytes keys; decode them.
-        shards = []
-        for item in resp:
-            shard = {
-                "slots": item.get("slots") or item.get(b"slots", []),
-                "nodes": [],
-            }
-            raw_nodes = item.get("nodes") or item.get(b"nodes", [])
-            for node in raw_nodes:
-                if isinstance(node, dict):
-                    shard["nodes"].append({str_if_bytes(k): v for k, v in node.items()})
-                else:
-                    shard["nodes"].append(node)
-            shards.append(shard)
-        return shards
-
-    # RESP2 – flat list structure; build dicts with string keys.
-    shards = []
-    for x in resp:
-        shard = {"slots": [], "nodes": []}
-        for i in range(0, len(x[1]), 2):
-            shard["slots"].append((x[1][i], (x[1][i + 1])))
-        nodes = x[3]
-        for node in nodes:
-            dict_node = {}
-            for i in range(0, len(node), 2):
-                dict_node[str_if_bytes(node[i])] = node[i + 1]
-            shard["nodes"].append(dict_node)
-        shards.append(shard)
-
-    return shards
+    pass
 
 
 def parse_cluster_myshardid(resp, **options):
     """
     Parse CLUSTER MYSHARDID response.
     """
-    return resp.decode("utf-8")
+    pass
 
 
 PRIMARY = "primary"
@@ -258,13 +197,7 @@ def cleanup_kwargs(**kwargs):
     """
     Remove unsupported or disabled keys from kwargs
     """
-    connection_kwargs = {
-        k: v
-        for k, v in kwargs.items()
-        if k in REDIS_ALLOWED_KEYS and k not in KWARGS_DISABLED_KEYS
-    }
-
-    return connection_kwargs
+    pass
 
 
 class MaintNotificationsAbstractRedisCluster:
@@ -325,11 +258,7 @@ class MaintNotificationsAbstractRedisCluster:
         """
         Update the connection kwargs for all future connections.
         """
-        self.nodes_manager.connection_kwargs.update(
-            {
-                "oss_cluster_maint_notifications_handler": oss_cluster_maint_notifications_handler,
-            }
-        )
+        pass
 
 
 class AbstractRedisCluster:
@@ -963,10 +892,7 @@ class RedisCluster(
         """
         Returns random primary or all nodes depends on READONLY mode.
         """
-        if self.read_from_replicas and command_name in READ_COMMANDS:
-            return self.get_random_node()
-
-        return self.get_random_primary_node()
+        pass
 
     def get_nodes(self):
         return list(self.nodes_manager.nodes_cache.values())
@@ -1001,72 +927,31 @@ class RedisCluster(
         """
         Returns a list of nodes that hold the specified keys' slots.
         """
-        # get the node that holds the key's slot
-        slot = self.determine_slot(*args)
-        node = self.nodes_manager.get_node_from_slot(
-            slot,
-            self.read_from_replicas and command in READ_COMMANDS,
-            self.load_balancing_strategy if command in READ_COMMANDS else None,
-        )
-        return [node]
+        pass
 
     def _split_multi_shard_command(self, *args, **kwargs) -> list[dict]:
         """
         Splits the command with Multi-Shard policy, to the multiple commands
         """
-        keys = self._get_command_keys(*args)
-        commands = []
-
-        for key in keys:
-            commands.append(
-                {
-                    "args": (args[0], key),
-                    "kwargs": kwargs,
-                }
-            )
-
-        return commands
+        pass
 
     def get_special_nodes(self) -> Optional[list["ClusterNode"]]:
         """
         Returns a list of nodes for commands with a special policy.
         """
-        if not self._aggregate_nodes:
-            raise RedisClusterException(
-                "Cannot execute FT.CURSOR commands without FT.AGGREGATE"
-            )
-
-        return self._aggregate_nodes
+        pass
 
     def get_random_primary_node(self) -> "ClusterNode":
         """
         Returns a random primary node
         """
-        return random.choice(self.get_primaries())
+        pass
 
     def _evaluate_all_succeeded(self, res):
         """
         Evaluate the result of a command with ResponsePolicy.ALL_SUCCEEDED
         """
-        first_successful_response = None
-
-        if isinstance(res, dict):
-            for key, value in res.items():
-                if value:
-                    if first_successful_response is None:
-                        first_successful_response = {key: value}
-                else:
-                    return {key: False}
-        else:
-            for response in res:
-                if response:
-                    if first_successful_response is None:
-                        # Dynamically resolve type
-                        first_successful_response = type(response)(response)
-                else:
-                    return type(response)(False)
-
-        return first_successful_response
+        pass
 
     def set_default_node(self, node):
         """
@@ -1074,13 +959,10 @@ class RedisCluster(
         :param node: 'ClusterNode'
         :return True if the default node was set, else False
         """
-        if node is None or self.get_node(node_name=node.name) is None:
-            return False
-        self.nodes_manager.default_node = node
-        return True
+        pass
 
     def set_retry(self, retry: Retry) -> None:
-        self.retry = retry
+        pass
 
     def monitor(self, target_node=None):
         """
@@ -1091,13 +973,7 @@ class RedisCluster(
         next_command() method returns one command from monitor
         listen() method yields commands from monitor.
         """
-        if target_node is None:
-            target_node = self.get_default_node()
-        if target_node.redis_connection is None:
-            raise RedisClusterException(
-                f"Cluster Node {target_node.name} has no redis_connection"
-            )
-        return target_node.redis_connection.monitor()
+        pass
 
     def pubsub(self, node=None, host=None, port=None, **kwargs):
         """
@@ -1126,13 +1002,7 @@ class RedisCluster(
                                       confirmations are not returned by
                                       get_message/listen.
         """
-        from redis.keyspace_notifications import ClusterKeyspaceNotifications
-
-        return ClusterKeyspaceNotifications(
-            self,
-            key_prefix=key_prefix,
-            ignore_subscribe_messages=ignore_subscribe_messages,
-        )
+        pass
 
     def pipeline(self, transaction=None, shard_hint=None):
         """
@@ -1229,22 +1099,11 @@ class RedisCluster(
         the token set by the thread that acquired the lock. Our assumption
         is that these cases aren't common and as such default to using
         thread local storage."""
-        if lock_class is None:
-            lock_class = Lock
-        return lock_class(
-            self,
-            name,
-            timeout=timeout,
-            sleep=sleep,
-            blocking=blocking,
-            blocking_timeout=blocking_timeout,
-            thread_local=thread_local,
-            raise_on_release_error=raise_on_release_error,
-        )
+        pass
 
     def set_response_callback(self, command, callback):
         """Set a custom Response Callback"""
-        self.cluster_response_callbacks[command] = callback
+        pass
 
     def _determine_nodes(
         self, *args, request_policy: RequestPolicy, **kwargs
@@ -1924,7 +1783,7 @@ class RedisCluster(
         ``funcname`` - A string containing the name of the function to create
         ``func`` - The function, being added to this class.
         """
-        setattr(self, funcname, func)
+        pass
 
     def transaction(self, func, *watches, **kwargs):
         """
@@ -2228,9 +2087,7 @@ class NodesManager:
         """
         Populate all startup nodes and filters out any duplicates
         """
-        with self._lock:
-            for n in nodes:
-                self.startup_nodes[n.name] = n
+        pass
 
     def move_node_to_end_of_cached_nodes(self, node_name: str) -> None:
         """
@@ -2656,39 +2513,20 @@ class ClusterPubSub(PubSub):
         :type host: str
         :type port: int
         """
-        if node is not None:
-            # node is passed by the user
-            self._raise_on_invalid_node(cluster, node, node.host, node.port)
-            pubsub_node = node
-        elif host is not None and port is not None:
-            # host and port passed by the user
-            node = cluster.get_node(host=host, port=port)
-            self._raise_on_invalid_node(cluster, node, host, port)
-            pubsub_node = node
-        elif any([host, port]) is True:
-            # only 'host' or 'port' passed
-            raise DataError("Passing a host requires passing a port, and vice versa")
-        else:
-            # nothing passed by the user. set node to None
-            pubsub_node = None
-
-        self.node = pubsub_node
+        pass
 
     def get_pubsub_node(self):
         """
         Get the node that is being used as the pubsub connection
         """
-        return self.node
+        pass
 
     def _raise_on_invalid_node(self, redis_cluster, node, host, port):
         """
         Raise a RedisClusterException if the node is None or doesn't exist in
         the cluster.
         """
-        if node is None or redis_cluster.get_node(node_name=node.name) is None:
-            raise RedisClusterException(
-                f"Node {host}:{port} doesn't exist in the cluster"
-            )
+        pass
 
     def execute_command(self, *args):
         """
@@ -2773,11 +2611,7 @@ class ClusterPubSub(PubSub):
         return None
 
     def _pubsubs_generator(self):
-        while True:
-            current_nodes = list(self.node_pubsub_mapping.values())
-            if not current_nodes:
-                return  # Avoid infinite loop when no subscriptions exist
-            yield from current_nodes
+        pass
 
     def get_sharded_message(
         self, ignore_subscribe_messages=False, timeout=0.0, target_node=None
@@ -2810,38 +2644,10 @@ class ClusterPubSub(PubSub):
         return message
 
     def ssubscribe(self, *args, **kwargs):
-        if args:
-            args = list_or_args(args[0], args[1:])
-        s_channels = dict.fromkeys(args)
-        s_channels.update(kwargs)
-        for s_channel, handler in s_channels.items():
-            node = self.cluster.get_node_from_key(s_channel)
-            pubsub = self._get_node_pubsub(node)
-            if handler:
-                pubsub.ssubscribe(**{s_channel: handler})
-            else:
-                pubsub.ssubscribe(s_channel)
-            self.shard_channels.update(pubsub.shard_channels)
-            self.pending_unsubscribe_shard_channels.difference_update(
-                self._normalize_keys({s_channel: None})
-            )
-            if pubsub.subscribed and not self.subscribed:
-                self.subscribed_event.set()
-                self.health_check_response_counter = 0
+        pass
 
     def sunsubscribe(self, *args):
-        if args:
-            args = list_or_args(args[0], args[1:])
-        else:
-            args = self.shard_channels
-
-        for s_channel in args:
-            node = self.cluster.get_node_from_key(s_channel)
-            p = self._get_node_pubsub(node)
-            p.sunsubscribe(s_channel)
-            self.pending_unsubscribe_shard_channels.update(
-                p.pending_unsubscribe_shard_channels
-            )
+        pass
 
     def get_redis_connection(self):
         """
@@ -3056,14 +2862,14 @@ class ClusterPipeline(RedisCluster):
 
     def eval(self):
         """ """
-        return self._execution_strategy.eval()
+        pass
 
     def multi(self):
         """
         Start a transactional block of the pipeline after WATCH commands
         are issued. End the transactional block with `execute`.
         """
-        self._execution_strategy.multi()
+        pass
 
     def load_scripts(self):
         """ """
@@ -3071,7 +2877,7 @@ class ClusterPipeline(RedisCluster):
 
     def discard(self):
         """ """
-        self._execution_strategy.discard()
+        pass
 
     def watch(self, *names):
         """Watches the values at keys ``names``"""
@@ -3079,16 +2885,16 @@ class ClusterPipeline(RedisCluster):
 
     def unwatch(self):
         """Unwatches all previously specified keys"""
-        self._execution_strategy.unwatch()
+        pass
 
     def script_load_for_pipeline(self, *args, **kwargs):
-        self._execution_strategy.script_load_for_pipeline(*args, **kwargs)
+        pass
 
     def delete(self, *names):
         self._execution_strategy.delete(*names)
 
     def unlink(self, *names):
-        self._execution_strategy.unlink(*names)
+        pass
 
 
 def block_pipeline_command(name: str) -> Callable[..., Any]:
@@ -3096,14 +2902,7 @@ def block_pipeline_command(name: str) -> Callable[..., Any]:
     Prints error because some pipelined commands should
     be blocked when running in cluster-mode
     """
-
-    def inner(*args, **kwargs):
-        raise RedisClusterException(
-            f"ERROR: Calling pipelined function {name} is blocked "
-            f"when running redis in cluster mode..."
-        )
-
-    return inner
+    pass
 
 
 # Blocked pipeline commands
@@ -3405,11 +3204,11 @@ class AbstractStrategy(ExecutionStrategy):
 
     @property
     def command_queue(self):
-        return self._command_queue
+        pass
 
     @command_queue.setter
     def command_queue(self, queue: List[PipelineCommand]):
-        self._command_queue = queue
+        pass
 
     @abstractmethod
     def execute_command(self, *args, **kwargs):
@@ -3875,12 +3674,7 @@ class PipelineStrategy(AbstractStrategy):
         return self.execute_command("DEL", names[0])
 
     def unlink(self, *names):
-        if len(names) != 1:
-            raise RedisClusterException(
-                "unlinking multiple keys is not implemented in pipeline command"
-            )
-
-        return self.execute_command("UNLINK", names[0])
+        pass
 
 
 class TransactionStrategy(AbstractStrategy):
@@ -4278,13 +4072,7 @@ class TransactionStrategy(AbstractStrategy):
         )
 
     def multi(self):
-        if self._explicit_transaction:
-            raise RedisError("Cannot issue nested calls to MULTI")
-        if self._command_queue:
-            raise RedisError(
-                "Commands without an initial WATCH have already been issued"
-            )
-        self._explicit_transaction = True
+        pass
 
     def watch(self, *names):
         if self._explicit_transaction:
@@ -4293,16 +4081,13 @@ class TransactionStrategy(AbstractStrategy):
         return self.execute_command("WATCH", *names)
 
     def unwatch(self):
-        if self._watching:
-            return self.execute_command("UNWATCH")
-
-        return True
+        pass
 
     def discard(self):
-        self.reset()
+        pass
 
     def delete(self, *names):
         return self.execute_command("DEL", *names)
 
     def unlink(self, *names):
-        return self.execute_command("UNLINK", *names)
+        pass

@@ -136,44 +136,7 @@ class VectorSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/vadd.
         """
-        if not vector or not element:
-            raise DataError("Both vector and element must be provided")
-
-        pieces = []
-        if reduce_dim:
-            pieces.extend(["REDUCE", reduce_dim])
-
-        values_pieces = []
-        if isinstance(vector, bytes):
-            values_pieces.extend(["FP32", vector])
-        else:
-            values_pieces.extend(["VALUES", len(vector)])
-            values_pieces.extend(vector)
-        pieces.extend(values_pieces)
-
-        pieces.append(element)
-
-        if cas:
-            pieces.append("CAS")
-
-        if quantization:
-            pieces.append(quantization.value)
-
-        if ef:
-            pieces.extend(["EF", ef])
-
-        if attributes:
-            if isinstance(attributes, dict):
-                # transform attributes to json string
-                attributes_json = json.dumps(attributes)
-            else:
-                attributes_json = attributes
-            pieces.extend(["SETATTR", attributes_json])
-
-        if numlinks:
-            pieces.extend(["M", numlinks])
-
-        return self.execute_command(VADD_CMD, key, *pieces)
+        pass
 
     @overload
     def vsim(
@@ -247,55 +210,7 @@ class VectorSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/vsim.
         """
-
-        if not input:
-            raise DataError("'input' should be provided")
-
-        pieces = []
-        options = {}
-
-        if isinstance(input, bytes):
-            pieces.extend(["FP32", input])
-        elif isinstance(input, list):
-            pieces.extend(["VALUES", len(input)])
-            pieces.extend(input)
-        else:
-            pieces.extend(["ELE", input])
-
-        if with_scores or with_attribs:
-            if get_protocol_version(self.client) in ["3", 3]:
-                options[CallbacksOptions.RESP3.value] = True
-
-            if with_scores:
-                pieces.append("WITHSCORES")
-                options[CallbacksOptions.WITHSCORES.value] = True
-
-            if with_attribs:
-                pieces.append("WITHATTRIBS")
-                options[CallbacksOptions.WITHATTRIBS.value] = True
-
-        if count:
-            pieces.extend(["COUNT", count])
-
-        if epsilon:
-            pieces.extend(["EPSILON", epsilon])
-
-        if ef:
-            pieces.extend(["EF", ef])
-
-        if filter:
-            pieces.extend(["FILTER", filter])
-
-        if filter_ef:
-            pieces.extend(["FILTER-EF", filter_ef])
-
-        if truth:
-            pieces.append("TRUTH")
-
-        if no_thread:
-            pieces.append("NOTHREAD")
-
-        return self.execute_command(VSIM_CMD, key, *pieces, **options)
+        pass
 
     @overload
     def vdim(self: SyncClientProtocol, key: KeyT) -> int: ...
@@ -315,7 +230,7 @@ class VectorSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/vdim.
         """
-        return self.execute_command(VDIM_CMD, key)
+        pass
 
     @overload
     def vcard(self: SyncClientProtocol, key: KeyT) -> int: ...
@@ -331,7 +246,7 @@ class VectorSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/vcard.
         """
-        return self.execute_command(VCARD_CMD, key)
+        pass
 
     @overload
     def vrem(self: SyncClientProtocol, key: KeyT, element: str) -> int: ...
@@ -345,7 +260,7 @@ class VectorSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/vrem.
         """
-        return self.execute_command(VREM_CMD, key, element)
+        pass
 
     @overload
     def vemb(
@@ -375,32 +290,7 @@ class VectorSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/vemb.
         """
-        options = {}
-        pieces = []
-        pieces.extend([key, element])
-
-        if get_protocol_version(self.client) in ["3", 3]:
-            options[CallbacksOptions.RESP3.value] = True
-
-        if raw:
-            pieces.append("RAW")
-
-            options[NEVER_DECODE] = True
-            if (
-                hasattr(self.client, "connection_pool")
-                and self.client.connection_pool.connection_kwargs["decode_responses"]
-            ) or (
-                hasattr(self.client, "nodes_manager")
-                and self.client.nodes_manager.connection_kwargs["decode_responses"]
-            ):
-                # allow decoding in the postprocessing callback
-                # if the user set decode_responses=True
-                # in the connection pool
-                options[CallbacksOptions.ALLOW_DECODING.value] = True
-
-            options[CallbacksOptions.RAW.value] = True
-
-        return self.execute_command(VEMB_CMD, *pieces, **options)
+        pass
 
     @overload
     def vlinks(
@@ -432,15 +322,7 @@ class VectorSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/vlinks
         """
-        options = {}
-        pieces = []
-        pieces.extend([key, element])
-
-        if with_scores:
-            pieces.append("WITHSCORES")
-            options[CallbacksOptions.WITHSCORES.value] = True
-
-        return self.execute_command(VLINKS_CMD, *pieces, **options)
+        pass
 
     @overload
     def vinfo(self: SyncClientProtocol, key: KeyT) -> dict | None: ...
@@ -454,7 +336,7 @@ class VectorSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/vinfo.
         """
-        return self.execute_command(VINFO_CMD, key)
+        pass
 
     @overload
     def vsetattr(
@@ -481,15 +363,7 @@ class VectorSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/vsetattr
         """
-        if attributes is None:
-            attributes_json = "{}"
-        elif isinstance(attributes, dict):
-            # transform attributes to json string
-            attributes_json = json.dumps(attributes)
-        else:
-            attributes_json = attributes
-
-        return self.execute_command(VSETATTR_CMD, key, element, attributes_json)
+        pass
 
     @overload
     def vgetattr(
@@ -512,7 +386,7 @@ class VectorSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/vgetattr.
         """
-        return self.execute_command(VGETATTR_CMD, key, element)
+        pass
 
     @overload
     def vrandmember(
@@ -544,11 +418,7 @@ class VectorSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/vrandmember.
         """
-        pieces = []
-        pieces.append(key)
-        if count is not None:
-            pieces.append(count)
-        return self.execute_command(VRANDMEMBER_CMD, *pieces)
+        pass
 
     @overload
     def vrange(
@@ -593,7 +463,4 @@ class VectorSetCommands(CommandsProtocol):
 
         For more information, see https://redis.io/commands/vrange.
         """
-        pieces = [key, start, end]
-        if count is not None:
-            pieces.append(count)
-        return self.execute_command(VRANGE_CMD, *pieces)
+        pass

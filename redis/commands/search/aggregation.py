@@ -11,10 +11,7 @@ class Limit:
         self.count = count
 
     def build_args(self):
-        if self.count:
-            return ["LIMIT", str(self.offset), str(self.count)]
-        else:
-            return []
+        pass
 
 
 class Reducer:
@@ -46,18 +43,11 @@ class Reducer:
         This method returns the `Reducer` object making it suitable for
         chaining.
         """
-        if alias is FIELDNAME:
-            if not self._field:
-                raise ValueError("Cannot use FIELDNAME alias with no field")
-            else:
-                # Chop off initial '@'
-                alias = self._field[1:]
-        self._alias = alias
-        return self
+        pass
 
     @property
     def args(self) -> Tuple[str, ...]:
-        return self._args
+        pass
 
 
 class SortDirection:
@@ -127,11 +117,7 @@ class AggregateRequest:
         - **fields**: If fields not specified, all the fields will be loaded.
         Otherwise, fields should be given in the format of `@field`.
         """
-        if fields:
-            self._loadfields.extend(fields)
-        else:
-            self._loadall = True
-        return self
+        pass
 
     def group_by(
         self, fields: Union[str, List[str]], *reducers: Reducer
@@ -147,17 +133,7 @@ class AggregateRequest:
         - **reducers**: One or more reducers. Reducers may be found in the
             `aggregation` module.
         """
-        fields = [fields] if isinstance(fields, str) else fields
-
-        ret = ["GROUPBY", str(len(fields)), *fields]
-        for reducer in reducers:
-            ret += ["REDUCE", reducer.NAME, str(len(reducer.args))]
-            ret.extend(reducer.args)
-            if reducer._alias is not None:
-                ret += ["AS", reducer._alias]
-
-        self._aggregateplan.extend(ret)
-        return self
+        pass
 
     def apply(self, **kwexpr) -> "AggregateRequest":
         """
@@ -169,13 +145,7 @@ class AggregateRequest:
             the alias for the projection, and the value is the projection
             expression itself, for example `apply(square_root="sqrt(@foo)")`
         """
-        for alias, expr in kwexpr.items():
-            ret = ["APPLY", expr]
-            if alias is not None:
-                ret += ["AS", alias]
-            self._aggregateplan.extend(ret)
-
-        return self
+        pass
 
     def limit(self, offset: int, num: int) -> "AggregateRequest":
         """
@@ -219,9 +189,7 @@ class AggregateRequest:
         `sort_by()` instead.
 
         """
-        _limit = Limit(offset, num)
-        self._aggregateplan.extend(_limit.build_args())
-        return self
+        pass
 
     def sort_by(self, *fields: str, **kwargs) -> "AggregateRequest":
         """
@@ -251,22 +219,7 @@ class AggregateRequest:
             .sort_by(Desc("@paid"), max=10)
         ```
         """
-
-        fields_args = []
-        for f in fields:
-            if isinstance(f, (Asc, Desc)):
-                fields_args += [f.field, f.DIRSTRING]
-            else:
-                fields_args += [f]
-
-        ret = ["SORTBY", str(len(fields_args))]
-        ret.extend(fields_args)
-        max = kwargs.get("max", 0)
-        if max > 0:
-            ret += ["MAX", str(max)]
-
-        self._aggregateplan.extend(ret)
-        return self
+        pass
 
     def filter(self, expressions: Union[str, List[str]]) -> "AggregateRequest":
         """
@@ -278,28 +231,20 @@ class AggregateRequest:
         - **fields**: Fields to group by. This can either be a single string,
             or a list of strings.
         """
-        if isinstance(expressions, str):
-            expressions = [expressions]
-
-        for expression in expressions:
-            self._aggregateplan.extend(["FILTER", expression])
-
-        return self
+        pass
 
     def with_schema(self) -> "AggregateRequest":
         """
         If set, the `schema` property will contain a list of `[field, type]`
         entries in the result object.
         """
-        self._with_schema = True
-        return self
+        pass
 
     def add_scores(self) -> "AggregateRequest":
         """
         If set, includes the score as an ordinary field of the row.
         """
-        self._add_scores = True
-        return self
+        pass
 
     def scorer(self, scorer: str) -> "AggregateRequest":
         """
@@ -309,56 +254,17 @@ class AggregateRequest:
         :param scorer: The scoring function to use
                        (e.g. `TFIDF.DOCNORM` or `BM25`)
         """
-        self._scorer = scorer
-        return self
+        pass
 
     def verbatim(self) -> "AggregateRequest":
-        self._verbatim = True
-        return self
+        pass
 
     def cursor(self, count: int = 0, max_idle: float = 0.0) -> "AggregateRequest":
-        args = ["WITHCURSOR"]
-        if count:
-            args += ["COUNT", str(count)]
-        if max_idle:
-            args += ["MAXIDLE", str(max_idle * 1000)]
-        self._cursor = args
-        return self
+        pass
 
     def build_args(self) -> List[str]:
         # @foo:bar ...
-        ret = [self._query]
-
-        if self._with_schema:
-            ret.append("WITHSCHEMA")
-
-        if self._verbatim:
-            ret.append("VERBATIM")
-
-        if self._scorer:
-            ret.extend(["SCORER", self._scorer])
-
-        if self._add_scores:
-            ret.append("ADDSCORES")
-
-        if self._cursor:
-            ret += self._cursor
-
-        if self._loadall:
-            ret.append("LOAD")
-            ret.append("*")
-
-        elif self._loadfields:
-            ret.append("LOAD")
-            ret.append(str(len(self._loadfields)))
-            ret.extend(self._loadfields)
-
-        if self._dialect:
-            ret.extend(["DIALECT", str(self._dialect)])
-
-        ret.extend(self._aggregateplan)
-
-        return ret
+        pass
 
     def dialect(self, dialect: int) -> "AggregateRequest":
         """
@@ -366,8 +272,7 @@ class AggregateRequest:
 
         - **dialect** - dialect version to execute the query under
         """
-        self._dialect = dialect
-        return self
+        pass
 
 
 class Cursor:
@@ -377,12 +282,7 @@ class Cursor:
         self.count = 0
 
     def build_args(self):
-        args = [str(self.cid)]
-        if self.max_idle:
-            args += ["MAXIDLE", str(self.max_idle)]
-        if self.count:
-            args += ["COUNT", str(self.count)]
-        return args
+        pass
 
 
 class AggregateResult:

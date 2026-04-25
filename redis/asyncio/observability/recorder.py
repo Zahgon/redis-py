@@ -210,14 +210,7 @@ async def init_connection_count() -> None:
         return
 
     def observable_callback(__):
-        observables_registry = get_observables_registry_instance()
-        callbacks = observables_registry.get(CONNECTION_COUNT_REGISTRY_KEY)
-        observations = []
-
-        for callback in callbacks:
-            observations.extend(callback())
-
-        return observations
+        pass
 
     try:
         collector.init_connection_count(
@@ -247,11 +240,7 @@ async def register_pools_connection_count(
         from opentelemetry.metrics import Observation
 
         def connection_count_callback():
-            observations = []
-            for connection_pool in connection_pools:
-                for count, attributes in connection_pool.get_connection_count():
-                    observations.append(Observation(count, attributes=attributes))
-            return observations
+            pass
 
         observables_registry = get_observables_registry_instance()
         observables_registry.register(
@@ -270,16 +259,7 @@ async def record_connection_timeout(
     Args:
         pool_name: Connection pool identifier
     """
-    collector = _get_or_create_collector()
-    if collector is None:
-        return
-
-    try:
-        collector.record_connection_timeout(
-            pool_name=pool_name,
-        )
-    except Exception:
-        pass
+    pass
 
 
 async def record_connection_wait_time(
@@ -343,18 +323,7 @@ async def record_connection_relaxed_timeout(
         maint_notification: Maintenance notification type
         relaxed: True to count up (relaxed), False to count down (unrelaxed)
     """
-    collector = _get_or_create_collector()
-    if collector is None:
-        return
-
-    try:
-        collector.record_connection_relaxed_timeout(
-            connection_name=connection_name,
-            maint_notification=maint_notification,
-            relaxed=relaxed,
-        )
-    except Exception:
-        pass
+    pass
 
 
 async def record_connection_handoff(
@@ -366,16 +335,7 @@ async def record_connection_handoff(
     Args:
         pool_name: Connection pool identifier
     """
-    collector = _get_or_create_collector()
-    if collector is None:
-        return
-
-    try:
-        collector.record_connection_handoff(
-            pool_name=pool_name,
-        )
-    except Exception:
-        pass
+    pass
 
 
 async def record_error_count(
@@ -573,20 +533,7 @@ async def record_maint_notification_count(
         network_peer_port: Network peer port
         maint_notification: Maintenance notification type (e.g., 'MOVING', 'MIGRATING')
     """
-    collector = _get_or_create_collector()
-    if collector is None:
-        return
-
-    try:
-        collector.record_maint_notification_count(
-            server_address=server_address,
-            server_port=server_port,
-            network_peer_address=network_peer_address,
-            network_peer_port=network_peer_port,
-            maint_notification=maint_notification,
-        )
-    except Exception:
-        pass
+    pass
 
 
 async def record_geo_failover(
@@ -620,8 +567,7 @@ def reset_collector() -> None:
     """
     Reset the global async collector (used for testing or re-initialization).
     """
-    global _async_metrics_collector
-    _async_metrics_collector = None
+    pass
 
 
 async def is_enabled() -> bool:

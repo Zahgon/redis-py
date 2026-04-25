@@ -6,58 +6,56 @@ def tags(*t):
 
     - **t**: Tags to search for
     """
-    if not t:
-        raise ValueError("At least one tag must be specified")
-    return TagValue(*t)
+    pass
 
 
 def between(a, b, inclusive_min=True, inclusive_max=True):
     """
     Indicate that value is a numeric range
     """
-    return RangeValue(a, b, inclusive_min=inclusive_min, inclusive_max=inclusive_max)
+    pass
 
 
 def equal(n):
     """
     Match a numeric value
     """
-    return between(n, n)
+    pass
 
 
 def lt(n):
     """
     Match any value less than n
     """
-    return between(None, n, inclusive_max=False)
+    pass
 
 
 def le(n):
     """
     Match any value less or equal to n
     """
-    return between(None, n, inclusive_max=True)
+    pass
 
 
 def gt(n):
     """
     Match any value greater than n
     """
-    return between(n, None, inclusive_min=False)
+    pass
 
 
 def ge(n):
     """
     Match any value greater or equal to n
     """
-    return between(n, None, inclusive_min=True)
+    pass
 
 
 def geo(lat, lon, radius, unit="km"):
     """
     Indicate that value is a geo region
     """
-    return GeoValue(lat, lon, radius, unit)
+    pass
 
 
 class Value:
@@ -67,16 +65,14 @@ class Value:
         Whether this type of value may be combined with other values
         for the same field. This makes the filter potentially more efficient
         """
-        return False
+        pass
 
     @staticmethod
     def make_value(v):
         """
         Convert an object to a value, if it is not a value already
         """
-        if isinstance(v, Value):
-            return v
-        return ScalarValue(v)
+        pass
 
     def to_string(self):
         raise NotImplementedError()
@@ -198,18 +194,11 @@ class Node:
             self.params.extend(self.join_fields(k, v))
 
     def join_fields(self, key, vals):
-        if len(vals) == 1:
-            return [BaseNode(f"@{key}:{vals[0].to_string()}")]
-        if not vals[0].combinable:
-            return [BaseNode(f"@{key}:{v.to_string()}") for v in vals]
-        s = BaseNode(f"@{key}:({self.JOINSTR.join(v.to_string() for v in vals)})")
-        return [s]
+        pass
 
     @classmethod
     def to_node(cls, obj):  # noqa
-        if isinstance(obj, Node):
-            return obj
-        return BaseNode(obj)
+        pass
 
     @property
     def JOINSTR(self):
@@ -298,20 +287,20 @@ class OptionalNode(IntersectNode):
 
 
 def intersect(*args, **kwargs):
-    return IntersectNode(*args, **kwargs)
+    pass
 
 
 def union(*args, **kwargs):
-    return UnionNode(*args, **kwargs)
+    pass
 
 
 def disjunct(*args, **kwargs):
-    return DisjunctNode(*args, **kwargs)
+    pass
 
 
 def disjunct_union(*args, **kwargs):
-    return DistjunctUnion(*args, **kwargs)
+    pass
 
 
 def querystring(*args, **kwargs):
-    return intersect(*args, **kwargs).to_string()
+    pass

@@ -54,10 +54,7 @@ from redis.utils import from_url
 
 
 def int_or_str(value):
-    try:
-        return int(value)
-    except ValueError:
-        return value
+    pass
 
 
 __version__ = "7.3.0"

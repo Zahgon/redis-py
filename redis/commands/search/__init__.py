@@ -50,40 +50,19 @@ class Search(SearchCommands):
             """
             Add a document to the batch query
             """
-            self.client._add_document(
-                doc_id,
-                conn=self._pipeline,
-                nosave=nosave,
-                score=score,
-                payload=payload,
-                replace=replace,
-                partial=partial,
-                no_create=no_create,
-                **fields,
-            )
-            self.current_chunk += 1
-            self.total += 1
-            if self.current_chunk >= self.chunk_size:
-                self.commit()
+            pass
 
         def add_document_hash(self, doc_id, score=1.0, replace=False):
             """
             Add a hash to the batch query
             """
-            self.client._add_document_hash(
-                doc_id, conn=self._pipeline, score=score, replace=replace
-            )
-            self.current_chunk += 1
-            self.total += 1
-            if self.current_chunk >= self.chunk_size:
-                self.commit()
+            pass
 
         def commit(self):
             """
             Manually commit and flush the batch indexing query
             """
-            self._pipeline.execute()
-            self.current_chunk = 0
+            pass
 
     def __init__(self, client, index_name="idx"):
         """
@@ -133,28 +112,13 @@ class AsyncSearch(Search, AsyncSearchCommands):
             """
             Add a document to the batch query
             """
-            self.client._add_document(
-                doc_id,
-                conn=self._pipeline,
-                nosave=nosave,
-                score=score,
-                payload=payload,
-                replace=replace,
-                partial=partial,
-                no_create=no_create,
-                **fields,
-            )
-            self.current_chunk += 1
-            self.total += 1
-            if self.current_chunk >= self.chunk_size:
-                await self.commit()
+            pass
 
         async def commit(self):
             """
             Manually commit and flush the batch indexing query
             """
-            await self._pipeline.execute()
-            self.current_chunk = 0
+            pass
 
     def pipeline(self, transaction=True, shard_hint=None):
         """Creates a pipeline for the SEARCH module, that can be used for executing
@@ -201,7 +165,7 @@ class Pipeline(SearchCommands, RedisPipeline):
     @property
     def client(self):
         """Return self so get_protocol_version() can access connection_pool."""
-        return self
+        pass
 
 
 class AsyncPipeline(AsyncSearchCommands, AsyncioPipeline, Pipeline):
@@ -232,4 +196,4 @@ class AsyncPipeline(AsyncSearchCommands, AsyncioPipeline, Pipeline):
         method) appears earlier in the MRO than Pipeline.client (a property) and
         would shadow it.
         """
-        return self
+        pass

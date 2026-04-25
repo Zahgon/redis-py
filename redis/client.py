@@ -507,15 +507,14 @@ class Redis(RedisModuleCommands, CoreCommands, SentinelCommands):
         return self.connection_pool.connection_kwargs
 
     def get_retry(self) -> Optional[Retry]:
-        return self.get_connection_kwargs().get("retry")
+        pass
 
     def set_retry(self, retry: Retry) -> None:
-        self.get_connection_kwargs().update({"retry": retry})
-        self.connection_pool.set_retry(retry)
+        pass
 
     def set_response_callback(self, command: str, callback: Callable) -> None:
         """Set a custom Response Callback"""
-        self.response_callbacks[command] = callback
+        pass
 
     def load_external_module(self, funcname, func) -> None:
         """
@@ -538,7 +537,7 @@ class Redis(RedisModuleCommands, CoreCommands, SentinelCommands):
         For a concrete example see the reimport of the redisjson module in
         tests/test_connection.py::test_loading_external_modules
         """
-        setattr(self, funcname, func)
+        pass
 
     def pipeline(self, transaction=True, shard_hint=None) -> "Pipeline":
         """
@@ -644,18 +643,7 @@ class Redis(RedisModuleCommands, CoreCommands, SentinelCommands):
         the token set by the thread that acquired the lock. Our assumption
         is that these cases aren't common and as such default to using
         thread local storage."""
-        if lock_class is None:
-            lock_class = Lock
-        return lock_class(
-            self,
-            name,
-            timeout=timeout,
-            sleep=sleep,
-            blocking=blocking,
-            blocking_timeout=blocking_timeout,
-            thread_local=thread_local,
-            raise_on_release_error=raise_on_release_error,
-        )
+        pass
 
     def pubsub(self, **kwargs):
         """
@@ -686,22 +674,13 @@ class Redis(RedisModuleCommands, CoreCommands, SentinelCommands):
                                       confirmations are not returned by
                                       get_message/listen.
         """
-        from redis.keyspace_notifications import KeyspaceNotifications
-
-        return KeyspaceNotifications(
-            self,
-            key_prefix=key_prefix,
-            ignore_subscribe_messages=ignore_subscribe_messages,
-        )
+        pass
 
     def monitor(self):
-        return Monitor(self.connection_pool)
+        pass
 
     def client(self):
-        return self.__class__(
-            connection_pool=self.connection_pool,
-            single_connection_client=True,
-        )
+        pass
 
     def __enter__(self):
         return self
@@ -783,10 +762,7 @@ class Redis(RedisModuleCommands, CoreCommands, SentinelCommands):
         actual_retry_attempts = [0]
 
         def failure_callback(error, failure_count):
-            if is_debug_log_enabled():
-                add_debug_log_for_operation_failure(conn)
-            actual_retry_attempts[0] = failure_count
-            self._close_connection(conn, error, failure_count, start_time, command_name)
+            pass
 
         if self._single_connection_client:
             self.single_connection_lock.acquire()
@@ -852,7 +828,7 @@ class Redis(RedisModuleCommands, CoreCommands, SentinelCommands):
         return response
 
     def get_cache(self) -> Optional[CacheInterface]:
-        return self.connection_pool.cache
+        pass
 
 
 StrictRedis = Redis
@@ -931,12 +907,7 @@ class Monitor:
             yield self.next_command()
 
     def _start_monitor(self):
-        self.connection.send_command("MONITOR")
-        # check that monitor returns 'OK', but don't return it to user
-        response = self.connection.read_response()
-
-        if not bool_ok(response):
-            raise RedisError(f"MONITOR failed: {response}")
+        pass
 
 
 class PubSub:
@@ -1045,7 +1016,7 @@ class PubSub:
     @property
     def subscribed(self) -> bool:
         """Indicates if there are subscriptions to any channels or patterns"""
-        return self.subscribed_event.is_set()
+        pass
 
     def execute_command(self, *args):
         """Execute a publish/subscribe command"""
@@ -1142,8 +1113,7 @@ class PubSub:
         actual_retry_attempts = [0]
 
         def failure_callback(error, failure_count):
-            actual_retry_attempts[0] = failure_count
-            self._reconnect(conn, error, failure_count, start_time, command_name)
+            pass
 
         try:
             response = conn.retry.call_with_retry(
@@ -1223,16 +1193,7 @@ class PubSub:
         self.check_health()
 
         def try_read():
-            if not block:
-                if not conn.can_read(timeout=timeout):
-                    return None
-                read_timeout = timeout
-            else:
-                conn.connect()
-                read_timeout = SENTINEL  # Use default socket timeout for blocking
-            return conn.read_response(
-                disconnect_on_error=False, push_request=True, timeout=read_timeout
-            )
+            pass
 
         response = self._execute(conn, try_read)
 
@@ -1373,36 +1334,14 @@ class PubSub:
         when a message is received on that channel rather than producing a message via
         ``listen()`` or ``get_sharded_message()``.
         """
-        if args:
-            args = list_or_args(args[0], args[1:])
-        new_s_channels = dict.fromkeys(args)
-        new_s_channels.update(kwargs)
-        ret_val = self.execute_command("SSUBSCRIBE", *new_s_channels.keys())
-        # update the s_channels dict AFTER we send the command. we don't want to
-        # subscribe twice to these channels, once for the command and again
-        # for the reconnection.
-        new_s_channels = self._normalize_keys(new_s_channels)
-        self.shard_channels.update(new_s_channels)
-        if not self.subscribed:
-            # Set the subscribed_event flag to True
-            self.subscribed_event.set()
-            # Clear the health check counter
-            self.health_check_response_counter = 0
-        self.pending_unsubscribe_shard_channels.difference_update(new_s_channels)
-        return ret_val
+        pass
 
     def sunsubscribe(self, *args, target_node=None):
         """
         Unsubscribe from the supplied shard_channels. If empty, unsubscribe from
         all shard_channels
         """
-        if args:
-            args = list_or_args(args[0], args[1:])
-            s_channels = self._normalize_keys(dict.fromkeys(args))
-        else:
-            s_channels = self.shard_channels
-        self.pending_unsubscribe_shard_channels.update(s_channels)
-        return self.execute_command("SUNSUBSCRIBE", *args)
+        pass
 
     def listen(self):
         "Listen for messages on channels this client has been subscribed to"
@@ -1713,13 +1652,7 @@ class Pipeline(Redis):
         Start a transactional block of the pipeline after WATCH commands
         are issued. End the transactional block with `execute`.
         """
-        if self.explicit_transaction:
-            raise RedisError("Cannot issue nested calls to MULTI")
-        if self.command_stack:
-            raise RedisError(
-                "Commands without an initial WATCH have already been issued"
-            )
-        self.explicit_transaction = True
+        pass
 
     def execute_command(self, *args, **kwargs):
         if (self.watching or args[0] == "WATCH") and not self.explicit_transaction:
@@ -1785,12 +1718,7 @@ class Pipeline(Redis):
         actual_retry_attempts = [0]
 
         def failure_callback(error, failure_count):
-            if is_debug_log_enabled():
-                add_debug_log_for_operation_failure(conn)
-            actual_retry_attempts[0] = failure_count
-            self._disconnect_reset_raise_on_watching(
-                conn, error, failure_count, start_time, command_name
-            )
+            pass
 
         try:
             response = conn.retry.call_with_retry(
@@ -1911,20 +1839,7 @@ class Pipeline(Redis):
 
     def _execute_pipeline(self, connection, commands, raise_on_error):
         # build up all commands into a single request to increase network perf
-        all_cmds = connection.pack_commands([args for args, _ in commands])
-        connection.send_packed_command(all_cmds)
-
-        responses = []
-        for args, options in commands:
-            try:
-                responses.append(self.parse_response(connection, args[0], **options))
-            except ResponseError as e:
-                responses.append(e)
-
-        if raise_on_error:
-            self.raise_first_error(commands, responses)
-
-        return responses
+        pass
 
     def raise_first_error(self, commands, response):
         for i, r in enumerate(response):
@@ -2024,12 +1939,7 @@ class Pipeline(Redis):
         actual_retry_attempts = [0]
 
         def failure_callback(error, failure_count):
-            if is_debug_log_enabled():
-                add_debug_log_for_operation_failure(conn)
-            actual_retry_attempts[0] = failure_count
-            self._disconnect_raise_on_watching(
-                conn, error, failure_count, start_time, operation_name
-            )
+            pass
 
         try:
             response = conn.retry.call_with_retry(
@@ -2068,7 +1978,7 @@ class Pipeline(Redis):
         Flushes all previously queued commands
         See: https://redis.io/commands/DISCARD
         """
-        self.execute_command("DISCARD")
+        pass
 
     def watch(self, *names):
         """Watches the values at keys ``names``"""
@@ -2078,4 +1988,4 @@ class Pipeline(Redis):
 
     def unwatch(self) -> bool:
         """Unwatches all previously specified keys"""
-        return self.watching and self.execute_command("UNWATCH") or True
+        pass

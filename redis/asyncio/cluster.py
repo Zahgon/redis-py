@@ -562,18 +562,14 @@ class RedisCluster(AbstractRedis, AbstractRedisCluster, AsyncRedisClusterCommand
         Helper coroutine to increment the usage counter while holding the lock.
         Returns the new value of the usage counter.
         """
-        async with self._usage_lock:
-            self._usage_counter += 1
-            return self._usage_counter
+        pass
 
     async def _decrement_usage(self) -> int:
         """
         Helper coroutine to decrement the usage counter while holding the lock.
         Returns the new value of the usage counter.
         """
-        async with self._usage_lock:
-            self._usage_counter -= 1
-            return self._usage_counter
+        pass
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         """
@@ -641,10 +637,7 @@ class RedisCluster(AbstractRedis, AbstractRedisCluster, AsyncRedisClusterCommand
 
         :raises DataError: if None is passed or node does not exist in cluster.
         """
-        if not node or not self.get_node(node_name=node.name):
-            raise DataError("The requested node does not exist in the cluster.")
-
-        self.nodes_manager.default_node = node
+        pass
 
     def get_node(
         self,
@@ -687,40 +680,25 @@ class RedisCluster(AbstractRedis, AbstractRedisCluster, AsyncRedisClusterCommand
         """
         Returns random primary or all nodes depends on READONLY mode.
         """
-        if self.read_from_replicas and command_name in READ_COMMANDS:
-            return self.get_random_node()
-
-        return self.get_random_primary_node()
+        pass
 
     def get_random_primary_node(self) -> "ClusterNode":
         """
         Returns a random primary node
         """
-        return random.choice(self.get_primaries())
+        pass
 
     async def get_nodes_from_slot(self, command: str, *args):
         """
         Returns a list of nodes that hold the specified keys' slots.
         """
-        # get the node that holds the key's slot
-        return [
-            self.nodes_manager.get_node_from_slot(
-                await self._determine_slot(command, *args),
-                self.read_from_replicas and command in READ_COMMANDS,
-                self.load_balancing_strategy if command in READ_COMMANDS else None,
-            )
-        ]
+        pass
 
     def get_special_nodes(self) -> Optional[list["ClusterNode"]]:
         """
         Returns a list of nodes for commands with a special policy.
         """
-        if not self._aggregate_nodes:
-            raise RedisClusterException(
-                "Cannot execute FT.CURSOR commands without FT.AGGREGATE"
-            )
-
-        return self._aggregate_nodes
+        pass
 
     def keyslot(self, key: EncodableT) -> int:
         """
@@ -739,11 +717,11 @@ class RedisCluster(AbstractRedis, AbstractRedisCluster, AsyncRedisClusterCommand
         return self.connection_kwargs
 
     def set_retry(self, retry: Retry) -> None:
-        self.retry = retry
+        pass
 
     def set_response_callback(self, command: str, callback: ResponseCallbackT) -> None:
         """Set a custom response callback."""
-        self.response_callbacks[command] = callback
+        pass
 
     async def _determine_nodes(
         self,
@@ -1281,15 +1259,7 @@ class RedisCluster(AbstractRedis, AbstractRedisCluster, AsyncRedisClusterCommand
                                       confirmations are not returned by
                                       get_message/listen.
         """
-        from redis.asyncio.keyspace_notifications import (
-            AsyncClusterKeyspaceNotifications,
-        )
-
-        return AsyncClusterKeyspaceNotifications(
-            self,
-            key_prefix=key_prefix,
-            ignore_subscribe_messages=ignore_subscribe_messages,
-        )
+        pass
 
     def lock(
         self,
@@ -1359,18 +1329,7 @@ class RedisCluster(AbstractRedis, AbstractRedisCluster, AsyncRedisClusterCommand
         the token set by the thread that acquired the lock. Our assumption
         is that these cases aren't common and as such default to using
         thread local storage."""
-        if lock_class is None:
-            lock_class = Lock
-        return lock_class(
-            self,
-            name,
-            timeout=timeout,
-            sleep=sleep,
-            blocking=blocking,
-            blocking_timeout=blocking_timeout,
-            thread_local=thread_local,
-            raise_on_release_error=raise_on_release_error,
-        )
+        pass
 
     async def transaction(
         self, func: Coroutine[None, "ClusterPipeline", Any], *watches, **kwargs
@@ -1644,23 +1603,7 @@ class ClusterNode:
         return ret
 
     async def re_auth_callback(self, token: TokenInterface):
-        tmp_queue = collections.deque()
-        while self._free:
-            conn = self._free.popleft()
-            await conn.retry.call_with_retry(
-                lambda: conn.send_command(
-                    "AUTH", token.try_get("oid"), token.get_value()
-                ),
-                lambda error: self._mock(error),
-            )
-            await conn.retry.call_with_retry(
-                lambda: conn.read_response(), lambda error: self._mock(error)
-            )
-            tmp_queue.append(conn)
-
-        while tmp_queue:
-            conn = tmp_queue.popleft()
-            self._free.append(conn)
+        pass
 
     async def _mock(self, error: RedisError):
         """
@@ -2089,11 +2032,11 @@ class ClusterPipeline(AbstractRedis, AbstractRedisCluster, AsyncRedisClusterComm
     @property
     def nodes_manager(self) -> "NodesManager":
         """Get the nodes manager from the cluster client."""
-        return self.cluster_client.nodes_manager
+        pass
 
     def set_response_callback(self, command: str, callback: ResponseCallbackT) -> None:
         """Set a custom response callback on the cluster client."""
-        self.cluster_client.set_response_callback(command, callback)
+        pass
 
     async def initialize(self) -> "ClusterPipeline":
         await self._execution_strategy.initialize()
@@ -2175,11 +2118,11 @@ class ClusterPipeline(AbstractRedis, AbstractRedisCluster, AsyncRedisClusterComm
         Start a transactional block of the pipeline after WATCH commands
         are issued. End the transactional block with `execute`.
         """
-        self._execution_strategy.multi()
+        pass
 
     async def discard(self):
         """ """
-        await self._execution_strategy.discard()
+        pass
 
     async def watch(self, *names):
         """Watches the values at keys ``names``"""
@@ -2187,15 +2130,15 @@ class ClusterPipeline(AbstractRedis, AbstractRedisCluster, AsyncRedisClusterComm
 
     async def unwatch(self):
         """Unwatches all previously specified keys"""
-        await self._execution_strategy.unwatch()
+        pass
 
     async def unlink(self, *names):
-        await self._execution_strategy.unlink(*names)
+        pass
 
     def mset_nonatomic(
         self, mapping: Mapping[AnyKeyT, EncodableT]
     ) -> "ClusterPipeline":
-        return self._execution_strategy.mset_nonatomic(mapping)
+        pass
 
 
 for command in PIPELINE_BLOCKED_COMMANDS:
@@ -2395,17 +2338,7 @@ class PipelineStrategy(AbstractStrategy):
     def mset_nonatomic(
         self, mapping: Mapping[AnyKeyT, EncodableT]
     ) -> "ClusterPipeline":
-        encoder = self._pipe.cluster_client.encoder
-
-        slots_pairs = {}
-        for pair in mapping.items():
-            slot = key_slot(encoder.encode(pair[0]))
-            slots_pairs.setdefault(slot, []).extend(pair)
-
-        for pairs in slots_pairs.values():
-            self.execute_command("MSET", *pairs)
-
-        return self._pipe
+        pass
 
     async def execute(
         self, raise_on_error: bool = True, allow_redirections: bool = True
@@ -2607,12 +2540,7 @@ class PipelineStrategy(AbstractStrategy):
         )
 
     async def unlink(self, *names):
-        if len(names) != 1:
-            raise RedisClusterException(
-                "unlinking multiple keys is not implemented in pipeline command"
-            )
-
-        return self.execute_command("UNLINK", names[0])
+        pass
 
 
 class TransactionStrategy(AbstractStrategy):
@@ -2673,12 +2601,7 @@ class TransactionStrategy(AbstractStrategy):
         error = None
 
         def runner():
-            nonlocal response
-            nonlocal error
-            try:
-                response = asyncio.run(self._execute_command(*args, **kwargs))
-            except Exception as e:
-                error = e
+            pass
 
         thread = threading.Thread(target=runner)
         thread.start()
@@ -3027,13 +2950,7 @@ class TransactionStrategy(AbstractStrategy):
         self._executing = False
 
     def multi(self):
-        if self._explicit_transaction:
-            raise RedisError("Cannot issue nested calls to MULTI")
-        if self._command_queue:
-            raise RedisError(
-                "Commands without an initial WATCH have already been issued"
-            )
-        self._explicit_transaction = True
+        pass
 
     async def watch(self, *names):
         if self._explicit_transaction:
@@ -3042,16 +2959,13 @@ class TransactionStrategy(AbstractStrategy):
         return await self.execute_command("WATCH", *names)
 
     async def unwatch(self):
-        if self._watching:
-            return await self.execute_command("UNWATCH")
-
-        return True
+        pass
 
     async def discard(self):
-        await self.reset()
+        pass
 
     async def unlink(self, *names):
-        return self.execute_command("UNLINK", *names)
+        pass
 
 
 class _ClusterNodePoolAdapter(ConnectionPoolInterface):
@@ -3209,22 +3123,7 @@ class ClusterPubSub(PubSub):
         If host is passed without port, or vice versa, a DataError will be
         thrown.
         """
-        if node is not None:
-            # node is passed by the user
-            self._raise_on_invalid_node(cluster, node, node.host, node.port)
-            pubsub_node = node
-        elif host is not None and port is not None:
-            # host and port passed by the user
-            node = cluster.get_node(host=host, port=port)
-            self._raise_on_invalid_node(cluster, node, host, port)
-            pubsub_node = node
-        elif host is not None or port is not None:
-            # only one of host and port is specified
-            raise DataError("Specify both host and port")
-        else:
-            # nothing specified by the user
-            pubsub_node = None
-        self.node = pubsub_node
+        pass
 
     def get_pubsub_node(self) -> Optional["ClusterNode"]:
         """
@@ -3232,7 +3131,7 @@ class ClusterPubSub(PubSub):
 
         :return: The ClusterNode being used for pubsub, or None if not yet determined
         """
-        return self.node
+        pass
 
     async def _resubscribe_shard_channels(self) -> None:
         # A single node can own multiple slot ranges, so a batched
@@ -3282,11 +3181,7 @@ class ClusterPubSub(PubSub):
 
     def _pubsubs_generator(self) -> Generator[PubSub, None, None]:
         """Generator that yields PubSub instances in round-robin fashion."""
-        while True:
-            current_nodes = list(self.node_pubsub_mapping.values())
-            if not current_nodes:
-                return  # Avoid infinite loop when no subscriptions exist
-            yield from current_nodes
+        pass
 
     async def get_sharded_message(
         self,
@@ -3340,23 +3235,7 @@ class ClusterPubSub(PubSub):
         :param args: Channel names
         :param kwargs: Channel names with handlers
         """
-        if args:
-            args = list_or_args(args[0], args[1:])
-        s_channels = dict.fromkeys(args)
-        s_channels.update(kwargs)
-
-        for s_channel, handler in s_channels.items():
-            node = self.cluster.get_node_from_key(s_channel)
-            if node:
-                pubsub = self._get_node_pubsub(node)
-                if handler:
-                    await pubsub.ssubscribe(**{s_channel: handler})
-                else:
-                    await pubsub.ssubscribe(s_channel)
-                self.shard_channels.update(pubsub.shard_channels)
-                self.pending_unsubscribe_shard_channels.difference_update(
-                    self._normalize_keys({s_channel: None})
-                )
+        pass
 
     async def sunsubscribe(self, *args: Any) -> None:
         """
@@ -3364,19 +3243,7 @@ class ClusterPubSub(PubSub):
 
         :param args: Channel names to unsubscribe from. If empty, unsubscribe from all.
         """
-        if args:
-            args = list_or_args(args[0], args[1:])
-        else:
-            args = list(self.shard_channels.keys())
-
-        for s_channel in args:
-            node = self.cluster.get_node_from_key(s_channel)
-            if node and node.name in self.node_pubsub_mapping:
-                pubsub = self.node_pubsub_mapping[node.name]
-                await pubsub.sunsubscribe(s_channel)
-                self.pending_unsubscribe_shard_channels.update(
-                    pubsub.pending_unsubscribe_shard_channels
-                )
+        pass
 
     def get_redis_connection(self) -> Optional["AbstractConnection"]:
         """
@@ -3415,10 +3282,7 @@ class ClusterPubSub(PubSub):
         Raise a RedisClusterException if the node is None or doesn't exist in
         the cluster.
         """
-        if node is None or redis_cluster.get_node(node_name=node.name) is None:
-            raise RedisClusterException(
-                f"Node {host}:{port} doesn't exist in the cluster"
-            )
+        pass
 
     async def execute_command(self, *args: Any, **kwargs: Any) -> Any:
         """

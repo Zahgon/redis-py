@@ -40,24 +40,10 @@ class SentinelManagedConnection(Connection):
         return s + ")>"
 
     async def connect_to(self, address):
-        self.host, self.port = address
-        await self.connect_check_health(
-            check_health=self.connection_pool.check_connection,
-            retry_socket_connect=False,
-        )
+        pass
 
     async def _connect_retry(self):
-        if self._reader:
-            return  # already connected
-        if self.connection_pool.is_master:
-            await self.connect_to(await self.connection_pool.get_master_address())
-        else:
-            async for slave in self.connection_pool.rotate_slaves():
-                try:
-                    return await self.connect_to(slave)
-                except ConnectionError:
-                    continue
-            raise SlaveNotFoundError  # Never be here
+        pass
 
     async def connect(self):
         return await self.retry.call_with_retry(
@@ -140,31 +126,11 @@ class SentinelConnectionPool(ConnectionPool):
         return check and super().owns_connection(connection)
 
     async def get_master_address(self):
-        master_address = await self.sentinel_manager.discover_master(self.service_name)
-        if self.is_master:
-            if self.master_address != master_address:
-                self.master_address = master_address
-                # disconnect any idle connections so that they reconnect
-                # to the new master the next time that they are used.
-                await self.disconnect(inuse_connections=False)
-        return master_address
+        pass
 
     async def rotate_slaves(self) -> AsyncIterator:
         """Round-robin slave balancer"""
-        slaves = await self.sentinel_manager.discover_slaves(self.service_name)
-        if slaves:
-            if self.slave_rr_counter is None:
-                self.slave_rr_counter = random.randint(0, len(slaves) - 1)
-            for _ in range(len(slaves)):
-                self.slave_rr_counter = (self.slave_rr_counter + 1) % len(slaves)
-                slave = slaves[self.slave_rr_counter]
-                yield slave
-        # Fallback to the master connection
-        try:
-            yield await self.get_master_address()
-        except MasterNotFoundError:
-            pass
-        raise SlaveNotFoundError(f"No slave found for {self.service_name!r}")
+        pass
 
 
 class Sentinel(AsyncSentinelCommands):
@@ -265,12 +231,7 @@ class Sentinel(AsyncSentinelCommands):
         )
 
     def check_master_state(self, state: dict, service_name: str) -> bool:
-        if not state["is_master"] or state["is_sdown"] or state["is_odown"]:
-            return False
-        # Check if our sentinel doesn't see other nodes
-        if state["num-other-sentinels"] < self.min_other_sentinels:
-            return False
-        return True
+        pass
 
     async def discover_master(self, service_name: str):
         """
@@ -280,57 +241,19 @@ class Sentinel(AsyncSentinelCommands):
         Returns a pair (address, port) or raises MasterNotFoundError if no
         master is found.
         """
-        collected_errors = list()
-        for sentinel_no, sentinel in enumerate(self.sentinels):
-            try:
-                masters = await sentinel.sentinel_masters()
-            except (ConnectionError, TimeoutError) as e:
-                collected_errors.append(f"{sentinel} - {e!r}")
-                continue
-            state = masters.get(service_name)
-            if state and self.check_master_state(state, service_name):
-                # Put this sentinel at the top of the list
-                self.sentinels[0], self.sentinels[sentinel_no] = (
-                    sentinel,
-                    self.sentinels[0],
-                )
-
-                ip = (
-                    self._force_master_ip
-                    if self._force_master_ip is not None
-                    else state["ip"]
-                )
-                return ip, state["port"]
-
-        error_info = ""
-        if len(collected_errors) > 0:
-            error_info = f" : {', '.join(collected_errors)}"
-        raise MasterNotFoundError(f"No master found for {service_name!r}{error_info}")
+        pass
 
     def filter_slaves(
         self, slaves: Iterable[Mapping]
     ) -> Sequence[Tuple[EncodableT, EncodableT]]:
         """Remove slaves that are in an ODOWN or SDOWN state"""
-        slaves_alive = []
-        for slave in slaves:
-            if slave["is_odown"] or slave["is_sdown"]:
-                continue
-            slaves_alive.append((slave["ip"], slave["port"]))
-        return slaves_alive
+        pass
 
     async def discover_slaves(
         self, service_name: str
     ) -> Sequence[Tuple[EncodableT, EncodableT]]:
         """Returns a list of alive slaves for service ``service_name``"""
-        for sentinel in self.sentinels:
-            try:
-                slaves = await sentinel.sentinel_slaves(service_name)
-            except (ConnectionError, ResponseError, TimeoutError):
-                continue
-            slaves = self.filter_slaves(slaves)
-            if slaves:
-                return slaves
-        return []
+        pass
 
     def master_for(
         self,
@@ -363,13 +286,7 @@ class Sentinel(AsyncSentinelCommands):
         passed to this class and passed to the connection pool as keyword
         arguments to be used to initialize Redis connections.
         """
-        kwargs["is_master"] = True
-        connection_kwargs = dict(self.connection_kwargs)
-        connection_kwargs.update(kwargs)
-
-        connection_pool = connection_pool_class(service_name, self, **connection_kwargs)
-        # The Redis object "owns" the pool
-        return redis_class.from_pool(connection_pool)
+        pass
 
     def slave_for(
         self,
@@ -395,10 +312,4 @@ class Sentinel(AsyncSentinelCommands):
         passed to this class and passed to the connection pool as keyword
         arguments to be used to initialize Redis connections.
         """
-        kwargs["is_master"] = False
-        connection_kwargs = dict(self.connection_kwargs)
-        connection_kwargs.update(kwargs)
-
-        connection_pool = connection_pool_class(service_name, self, **connection_kwargs)
-        # The Redis object "owns" the pool
-        return redis_class.from_pool(connection_pool)
+        pass

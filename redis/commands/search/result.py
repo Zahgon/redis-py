@@ -97,45 +97,7 @@ class Result:
             "warning": [...]
         }
         """
-        instance = cls.__new__(cls)
-        if res is None:
-            res = {}
-        instance.total = res.get("total_results", 0)
-        instance.duration = duration
-        instance.docs = []
-        instance.warnings = [str_if_bytes(w) for w in res.get("warning", [])]
-
-        for result_item in res.get("results", []):
-            doc_id = str_if_bytes(result_item.get("id", ""))
-            score = None
-            if with_scores and "score" in result_item:
-                score = float(result_item["score"])
-
-            fields = {}
-            extra_attrs = result_item.get("extra_attributes") or {}
-            for key, value in extra_attrs.items():
-                key = str_if_bytes(key)
-                fields[key] = decode_field_value(value, key, field_encodings)
-
-            try:
-                del fields["id"]
-            except KeyError:
-                pass
-
-            try:
-                fields["json"] = fields["$"]
-                del fields["$"]
-            except KeyError:
-                pass
-
-            doc = (
-                Document(doc_id, score=score, payload=None, **fields)
-                if with_scores
-                else Document(doc_id, payload=None, **fields)
-            )
-            instance.docs.append(doc)
-
-        return instance
+        pass
 
     def __repr__(self) -> str:
         return f"Result{{{self.total} total, docs: {self.docs}}}"

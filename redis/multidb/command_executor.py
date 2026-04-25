@@ -50,11 +50,11 @@ class BaseCommandExecutor(CommandExecutor):
 
     @property
     def auto_fallback_interval(self) -> float:
-        return self._auto_fallback_interval
+        pass
 
     @auto_fallback_interval.setter
     def auto_fallback_interval(self, auto_fallback_interval: int) -> None:
-        self._auto_fallback_interval = auto_fallback_interval
+        pass
 
     def _schedule_next_fallback(self) -> None:
         if self._auto_fallback_interval < 0:
@@ -202,55 +202,38 @@ class DefaultCommandExecutor(SyncCommandExecutor, BaseCommandExecutor):
 
     @property
     def databases(self) -> Databases:
-        return self._databases
+        pass
 
     @property
     def failure_detectors(self) -> List[FailureDetector]:
-        return self._failure_detectors
+        pass
 
     def add_failure_detector(self, failure_detector: FailureDetector) -> None:
-        self._failure_detectors.append(failure_detector)
+        pass
 
     @property
     def command_retry(self) -> Retry:
-        return self._command_retry
+        pass
 
     @property
     def active_database(self) -> Optional[SyncDatabase]:
-        return self._active_database
+        pass
 
     @active_database.setter
     def active_database(self, value: Tuple[SyncDatabase, GeoFailoverReason]) -> None:
-        database, reason = value
-        old_active = self._active_database
-        self._active_database = database
-
-        if old_active is not None and old_active is not database:
-            record_geo_failover(
-                fail_from=old_active,
-                fail_to=database,
-                reason=reason,
-            )
-            self._event_dispatcher.dispatch(
-                ActiveDatabaseChanged(
-                    old_active,
-                    self._active_database,
-                    self,
-                    **self._active_pubsub_kwargs,
-                )
-            )
+        pass
 
     @property
     def active_pubsub(self) -> Optional[PubSub]:
-        return self._active_pubsub
+        pass
 
     @active_pubsub.setter
     def active_pubsub(self, pubsub: PubSub) -> None:
-        self._active_pubsub = pubsub
+        pass
 
     @property
     def failover_strategy_executor(self) -> FailoverStrategyExecutor:
-        return self._failover_strategy_executor
+        pass
 
     def execute_command(self, *args, **options):
         def callback():
@@ -352,15 +335,4 @@ class DefaultCommandExecutor(SyncCommandExecutor, BaseCommandExecutor):
         """
         Registers necessary listeners.
         """
-        failure_listener = RegisterCommandFailure(self._failure_detectors)
-        resubscribe_listener = ResubscribeOnActiveDatabaseChanged()
-        close_connection_listener = CloseConnectionOnActiveDatabaseChanged()
-        self._event_dispatcher.register_listeners(
-            {
-                OnCommandsFailEvent: [failure_listener],
-                ActiveDatabaseChanged: [
-                    close_connection_listener,
-                    resubscribe_listener,
-                ],
-            }
-        )
+        pass

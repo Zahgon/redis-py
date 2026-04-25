@@ -35,4 +35,4 @@ class FailureDetectorAsyncWrapper(AsyncFailureDetector):
         self._failure_detector.register_command_execution(cmd)
 
     def set_command_executor(self, command_executor) -> None:
-        self._failure_detector.set_command_executor(command_executor)
+        pass

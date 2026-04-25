@@ -56,9 +56,7 @@ class AbstractRetry(Generic[E], abc.ABC):
         """
         Updates the supported errors with the specified error types
         """
-        self._supported_errors = tuple(
-            set(self._supported_errors + tuple(specified_errors))
-        )
+        pass
 
     def get_retries(self) -> int:
         """
@@ -70,7 +68,7 @@ class AbstractRetry(Generic[E], abc.ABC):
         """
         Set the number of retries.
         """
-        self._retries = value
+        pass
 
 
 class Retry(AbstractRetry[Exception]):

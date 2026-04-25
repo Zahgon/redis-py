@@ -117,124 +117,31 @@ class RedisMetricsCollector:
 
     def _init_resiliency_metrics(self) -> None:
         """Initialize resiliency metrics."""
-        self.client_errors = self.meter.create_counter(
-            name="redis.client.errors",
-            unit="{error}",
-            description="A counter of all errors (both returned to the user and handled internally in the client library)",
-        )
-
-        self.maintenance_notifications = self.meter.create_counter(
-            name="redis.client.maintenance.notifications",
-            unit="{notification}",
-            description="Tracks server-side maintenance notifications",
-        )
-
-        self.geo_failovers = self.meter.create_counter(
-            name="redis.client.geofailover.failovers",
-            unit="{geofailover}",
-            description="Total count of failovers happened using MultiDbClient.",
-        )
+        pass
 
     def _init_connection_basic_metrics(self) -> None:
         """Initialize basic connection metrics."""
-        self.connection_create_time = self.meter.create_histogram(
-            name="db.client.connection.create_time",
-            unit="s",
-            description="Time to create a new connection",
-            explicit_bucket_boundaries_advisory=self.config.buckets_connection_create_time,
-        )
-
-        self.connection_relaxed_timeout = self.meter.create_up_down_counter(
-            name="redis.client.connection.relaxed_timeout",
-            unit="{relaxation}",
-            description="Counts up for relaxed timeout, counts down for unrelaxed timeout",
-        )
-
-        self.connection_handoff = self.meter.create_counter(
-            name="redis.client.connection.handoff",
-            unit="{handoff}",
-            description="Connections that have been handed off (e.g., after a MOVING notification)",
-        )
-
-        # DEPRECATED: This attribute is kept for backward compatibility.
-        # It requires manual initialization via init_connection_count() with a callback.
-        # Use connection_count_updown instead for push-based tracking.
-        # Will be removed in the next major version.
-        self.connection_count = None
-
-        # New push-based connection count tracking via UpDownCounter
-        self.connection_count_updown = self.meter.create_up_down_counter(
-            name="db.client.connection.count",
-            unit="{connection}",
-            description="Number of connections currently in the pool by state",
-        )
+        pass
 
     def _init_connection_advanced_metrics(self) -> None:
         """Initialize advanced connection metrics."""
-        self.connection_timeouts = self.meter.create_counter(
-            name="db.client.connection.timeouts",
-            unit="{timeout}",
-            description="The number of connection timeouts that have occurred trying to obtain a connection from the pool.",
-        )
-
-        self.connection_wait_time = self.meter.create_histogram(
-            name="db.client.connection.wait_time",
-            unit="s",
-            description="Time to obtain an open connection from the pool",
-            explicit_bucket_boundaries_advisory=self.config.buckets_connection_wait_time,
-        )
-
-        self.connection_closed = self.meter.create_counter(
-            name="redis.client.connection.closed",
-            unit="{connection}",
-            description="Total number of closed connections",
-        )
+        pass
 
     def _init_command_metrics(self) -> None:
         """Initialize command execution metric instruments."""
-        self.operation_duration = self.meter.create_histogram(
-            name="db.client.operation.duration",
-            unit="s",
-            description="Command execution duration",
-            explicit_bucket_boundaries_advisory=self.config.buckets_operation_duration,
-        )
+        pass
 
     def _init_pubsub_metrics(self) -> None:
         """Initialize PubSub metric instruments."""
-        self.pubsub_messages = self.meter.create_counter(
-            name="redis.client.pubsub.messages",
-            unit="{message}",
-            description="Tracks published and received messages",
-        )
+        pass
 
     def _init_streaming_metrics(self) -> None:
         """Initialize Streaming metric instruments."""
-        self.stream_lag = self.meter.create_histogram(
-            name="redis.client.stream.lag",
-            unit="s",
-            description="End-to-end lag per message, showing how stale are the messages when the application starts processing them.",
-            explicit_bucket_boundaries_advisory=self.config.buckets_stream_processing_duration,
-        )
+        pass
 
     def _init_csc_metrics(self) -> None:
         """Initialize Client Side Caching (CSC) metric instruments."""
-        self.csc_requests = self.meter.create_counter(
-            name="redis.client.csc.requests",
-            unit="{request}",
-            description="The total number of requests to the cache",
-        )
-
-        self.csc_evictions = self.meter.create_counter(
-            name="redis.client.csc.evictions",
-            unit="{eviction}",
-            description="The total number of cache evictions",
-        )
-
-        self.csc_network_saved = self.meter.create_counter(
-            name="redis.client.csc.network_saved",
-            unit="By",
-            description="The total number of bytes saved by using CSC",
-        )
+        pass
 
     # Resiliency metric recording methods
 
@@ -302,23 +209,7 @@ class RedisMetricsCollector:
             network_peer_port: Network peer port
             maint_notification: Maintenance notification
         """
-        if not hasattr(self, "maintenance_notifications"):
-            return
-
-        attrs = self.attr_builder.build_base_attributes(
-            server_address=server_address,
-            server_port=server_port,
-        )
-
-        attrs.update(
-            self.attr_builder.build_operation_attributes(
-                network_peer_address=network_peer_address,
-                network_peer_port=network_peer_port,
-            )
-        )
-
-        attrs[REDIS_CLIENT_CONNECTION_NOTIFICATION] = maint_notification
-        self.maintenance_notifications.add(1, attributes=attrs)
+        pass
 
     def record_geo_failover(
         self,
@@ -408,15 +299,7 @@ class RedisMetricsCollector:
         Args:
             callback: Callback function to retrieve CSC items count
         """
-        if MetricGroup.CSC not in self.config.metric_groups and not self.csc_items:
-            return
-
-        self.csc_items = self.meter.create_observable_gauge(
-            name="redis.client.csc.items",
-            unit="{item}",
-            description="The total number of cached responses currently stored",
-            callbacks=[callback],
-        )
+        pass
 
     def record_connection_timeout(self, pool_name: str) -> None:
         """
@@ -425,11 +308,7 @@ class RedisMetricsCollector:
         Args:
             pool_name: Connection pool name
         """
-        if not hasattr(self, "connection_timeouts"):
-            return
-
-        attrs = self.attr_builder.build_connection_attributes(pool_name=pool_name)
-        self.connection_timeouts.add(1, attributes=attrs)
+        pass
 
     def record_connection_create_time(
         self,
@@ -578,12 +457,7 @@ class RedisMetricsCollector:
             maint_notification: Maintenance notification type
             relaxed: True to count up (relaxed), False to count down (unrelaxed)
         """
-        if not hasattr(self, "connection_relaxed_timeout"):
-            return
-
-        attrs = self.attr_builder.build_connection_attributes(pool_name=connection_name)
-        attrs[REDIS_CLIENT_CONNECTION_NOTIFICATION] = maint_notification
-        self.connection_relaxed_timeout.add(1 if relaxed else -1, attributes=attrs)
+        pass
 
     def record_connection_handoff(
         self,
@@ -595,11 +469,7 @@ class RedisMetricsCollector:
         Args:
             pool_name: Connection pool name
         """
-        if not hasattr(self, "connection_handoff"):
-            return
-
-        attrs = self.attr_builder.build_connection_attributes(pool_name=pool_name)
-        self.connection_handoff.add(1, attributes=attrs)
+        pass
 
     # PubSub metric recording methods
 
@@ -689,11 +559,7 @@ class RedisMetricsCollector:
             count: Number of evictions
             reason: Reason for eviction
         """
-        if not hasattr(self, "csc_evictions"):
-            return
-
-        attrs = self.attr_builder.build_csc_attributes(reason=reason)
-        self.csc_evictions.add(count, attributes=attrs)
+        pass
 
     def record_csc_network_saved(
         self,
@@ -721,7 +587,7 @@ class RedisMetricsCollector:
         Returns:
             Current monotonic time in seconds
         """
-        return time.monotonic()
+        pass
 
     def __repr__(self) -> str:
         return f"RedisMetricsCollector(meter={self.meter}, config={self.config})"

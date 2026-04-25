@@ -54,19 +54,19 @@ class Database(BaseDatabase, AsyncDatabase):
 
     @property
     def client(self) -> Union[Redis, RedisCluster]:
-        return self._client
+        pass
 
     @client.setter
     def client(self, client: Union[Redis, RedisCluster]):
-        self._client = client
+        pass
 
     @property
     def circuit(self) -> CircuitBreaker:
-        return self._cb
+        pass
 
     @circuit.setter
     def circuit(self, circuit: CircuitBreaker):
-        self._cb = circuit
+        pass
 
     def __repr__(self):
         return f"Database(client={self.client}, weight={self.weight})"

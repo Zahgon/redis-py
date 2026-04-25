@@ -38,15 +38,7 @@ class FPHAType(str, Enum):
         Raises:
             DataError: If the string does not match any valid FPHA type.
         """
-        if isinstance(value, cls):
-            return value
-        try:
-            return cls(value.upper())
-        except ValueError:
-            raise DataError(
-                f"Invalid FPHA type: {value}. "
-                f"Must be one of {', '.join(t.value for t in cls)}"
-            )
+        pass
 
 
 class JSONCommands:
@@ -76,10 +68,7 @@ class JSONCommands:
 
         For more information see `JSON.ARRAPPEND <https://redis.io/commands/json.arrappend>`_..
         """  # noqa
-        pieces = [name, str(path)]
-        for o in args:
-            pieces.append(self._encode(o))
-        return self.execute_command("JSON.ARRAPPEND", *pieces)
+        pass
 
     @overload
     def arrindex(
@@ -118,13 +107,7 @@ class JSONCommands:
 
         For more information see `JSON.ARRINDEX <https://redis.io/commands/json.arrindex>`_.
         """  # noqa
-        pieces = [name, str(path), self._encode(scalar)]
-        if start is not None:
-            pieces.append(start)
-            if stop is not None:
-                pieces.append(stop)
-
-        return self.execute_command("JSON.ARRINDEX", *pieces, keys=[name])
+        pass
 
     @overload
     def arrinsert(
@@ -148,10 +131,7 @@ class JSONCommands:
 
         For more information see `JSON.ARRINSERT <https://redis.io/commands/json.arrinsert>`_.
         """  # noqa
-        pieces = [name, str(path), index]
-        for o in args:
-            pieces.append(self._encode(o))
-        return self.execute_command("JSON.ARRINSERT", *pieces)
+        pass
 
     @overload
     def arrlen(
@@ -171,7 +151,7 @@ class JSONCommands:
 
         For more information see `JSON.ARRLEN <https://redis.io/commands/json.arrlen>`_.
         """  # noqa
-        return self.execute_command("JSON.ARRLEN", name, str(path), keys=[name])
+        pass
 
     @overload
     def arrpop(
@@ -200,7 +180,7 @@ class JSONCommands:
 
         For more information see `JSON.ARRPOP <https://redis.io/commands/json.arrpop>`_.
         """  # noqa
-        return self.execute_command("JSON.ARRPOP", name, str(path), index)
+        pass
 
     @overload
     def arrtrim(
@@ -220,7 +200,7 @@ class JSONCommands:
 
         For more information see `JSON.ARRTRIM <https://redis.io/commands/json.arrtrim>`_.
         """  # noqa
-        return self.execute_command("JSON.ARRTRIM", name, str(path), start, stop)
+        pass
 
     @overload
     def type(
@@ -239,7 +219,7 @@ class JSONCommands:
 
         For more information see `JSON.TYPE <https://redis.io/commands/json.type>`_.
         """  # noqa
-        return self.execute_command("JSON.TYPE", name, str(path), keys=[name])
+        pass
 
     @overload
     def resp(
@@ -258,7 +238,7 @@ class JSONCommands:
 
         For more information see `JSON.RESP <https://redis.io/commands/json.resp>`_.
         """  # noqa
-        return self.execute_command("JSON.RESP", name, str(path), keys=[name])
+        pass
 
     @overload
     def objkeys(
@@ -278,7 +258,7 @@ class JSONCommands:
 
         For more information see `JSON.OBJKEYS <https://redis.io/commands/json.objkeys>`_.
         """  # noqa
-        return self.execute_command("JSON.OBJKEYS", name, str(path), keys=[name])
+        pass
 
     @overload
     def objlen(
@@ -298,7 +278,7 @@ class JSONCommands:
 
         For more information see `JSON.OBJLEN <https://redis.io/commands/json.objlen>`_.
         """  # noqa
-        return self.execute_command("JSON.OBJLEN", name, str(path), keys=[name])
+        pass
 
     @overload
     def numincrby(
@@ -318,9 +298,7 @@ class JSONCommands:
 
         For more information see `JSON.NUMINCRBY <https://redis.io/commands/json.numincrby>`_.
         """  # noqa
-        return self.execute_command(
-            "JSON.NUMINCRBY", name, str(path), self._encode(number)
-        )
+        pass
 
     @overload
     def nummultby(
@@ -341,9 +319,7 @@ class JSONCommands:
 
         For more information see `JSON.NUMMULTBY <https://redis.io/commands/json.nummultby>`_.
         """  # noqa
-        return self.execute_command(
-            "JSON.NUMMULTBY", name, str(path), self._encode(number)
-        )
+        pass
 
     @overload
     def clear(
@@ -449,10 +425,7 @@ class JSONCommands:
 
         For more information see `JSON.MGET <https://redis.io/commands/json.mget>`_.
         """  # noqa
-        pieces = []
-        pieces += keys
-        pieces.append(str(path))
-        return self.execute_command("JSON.MGET", *pieces, keys=keys)
+        pass
 
     @overload
     def set(
@@ -505,26 +478,7 @@ class JSONCommands:
 
         For more information see `JSON.SET <https://redis.io/commands/json.set>`_.
         """
-        if decode_keys:
-            obj = decode_dict_keys(obj)
-
-        pieces = [name, str(path), self._encode(obj)]
-
-        # Handle existential modifiers
-        if nx and xx:
-            raise Exception(
-                "nx and xx are mutually exclusive: use one, the "
-                "other or neither - but not both"
-            )
-        elif nx:
-            pieces.append("NX")
-        elif xx:
-            pieces.append("XX")
-
-        if fpha is not None:
-            pieces.extend(["FPHA", FPHAType.from_value(fpha).value])
-
-        return self.execute_command("JSON.SET", *pieces)
+        pass
 
     @overload
     def mset(
@@ -548,10 +502,7 @@ class JSONCommands:
 
         For more information see `JSON.MSET <https://redis.io/commands/json.mset>`_.
         """
-        pieces = []
-        for triplet in triplets:
-            pieces.extend([triplet[0], str(triplet[1]), self._encode(triplet[2])])
-        return self.execute_command("JSON.MSET", *pieces)
+        pass
 
     @overload
     def merge(
@@ -587,12 +538,7 @@ class JSONCommands:
 
         For more information see `JSON.MERGE <https://redis.io/commands/json.merge>`_.
         """
-        if decode_keys:
-            obj = decode_dict_keys(obj)
-
-        pieces = [name, str(path), self._encode(obj)]
-
-        return self.execute_command("JSON.MERGE", *pieces)
+        pass
 
     @overload
     def set_file(
@@ -642,13 +588,7 @@ class JSONCommands:
         (``"BF16"``, ``"FP16"``, ``"FP32"``, ``"FP64"``).
 
         """
-
-        with open(file_name) as fp:
-            file_content = loads(fp.read())
-
-        return self.set(
-            name, path, file_content, nx=nx, xx=xx, decode_keys=decode_keys, fpha=fpha
-        )
+        pass
 
     @overload
     def set_path(
@@ -695,29 +635,7 @@ class JSONCommands:
         (``"BF16"``, ``"FP16"``, ``"FP32"``, ``"FP64"``).
 
         """
-        set_files_result = {}
-        for root, dirs, files in os.walk(root_folder):
-            for file in files:
-                file_path = os.path.join(root, file)
-                try:
-                    # TODO: rsplit(".") splits on all dots, mishandling paths
-                    # with dots in directories (e.g. /data/v1.2/file.json).
-                    # Should be rsplit(".", 1) — fix in a separate PR.
-                    file_name = file_path.rsplit(".")[0]
-                    self.set_file(
-                        file_name,
-                        json_path,
-                        file_path,
-                        nx=nx,
-                        xx=xx,
-                        decode_keys=decode_keys,
-                        fpha=fpha,
-                    )
-                    set_files_result[file_path] = True
-                except JSONDecodeError:
-                    set_files_result[file_path] = False
-
-        return set_files_result
+        pass
 
     @overload
     def strlen(
@@ -737,10 +655,7 @@ class JSONCommands:
 
         For more information see `JSON.STRLEN <https://redis.io/commands/json.strlen>`_.
         """  # noqa
-        pieces = [name]
-        if path is not None:
-            pieces.append(str(path))
-        return self.execute_command("JSON.STRLEN", *pieces, keys=[name])
+        pass
 
     @overload
     def toggle(
@@ -760,7 +675,7 @@ class JSONCommands:
 
         For more information see `JSON.TOGGLE <https://redis.io/commands/json.toggle>`_.
         """  # noqa
-        return self.execute_command("JSON.TOGGLE", name, str(path))
+        pass
 
     @overload
     def strappend(
@@ -787,8 +702,7 @@ class JSONCommands:
 
         For more information see `JSON.STRAPPEND <https://redis.io/commands/json.strappend>`_.
         """  # noqa
-        pieces = [name, str(path), self._encode(value)]
-        return self.execute_command("JSON.STRAPPEND", *pieces)
+        pass
 
     @overload
     def debug(
@@ -838,7 +752,7 @@ class JSONCommands:
         version="4.0.0", reason="redisjson-py supported this, call get directly."
     )
     def jsonget(self, *args, **kwargs) -> JsonType | Awaitable[JsonType]:
-        return self.get(*args, **kwargs)
+        pass
 
     @overload
     def jsonmget(
@@ -856,7 +770,7 @@ class JSONCommands:
     def jsonmget(
         self, *args, **kwargs
     ) -> list[JsonType | None] | Awaitable[list[JsonType | None]]:
-        return self.mget(*args, **kwargs)
+        pass
 
     @overload
     def jsonset(self: SyncClientProtocol, *args, **kwargs) -> bool | None: ...
@@ -870,4 +784,4 @@ class JSONCommands:
         version="4.0.0", reason="redisjson-py supported this, call get directly."
     )
     def jsonset(self, *args, **kwargs) -> (bool | None) | Awaitable[bool | None]:
-        return self.set(*args, **kwargs)
+        pass

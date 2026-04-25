@@ -185,35 +185,13 @@ class MaintenanceNotificationsParser:
     def parse_oss_maintenance_start_msg(response):
         # Expected message format is:
         # SMIGRATING <seq_number> <slot, range1-range2,...>
-        id = response[1]
-        slots = safe_str(response[2])
-        return OSSNodeMigratingNotification(id, slots)
+        pass
 
     @staticmethod
     def parse_oss_maintenance_completed_msg(response):
         # Expected message format is:
         # SMIGRATED <seq_number> [[<src_host:port> <dest_host:port> <slot_range>], ...]
-        id = response[1]
-        nodes_to_slots_mapping_data = response[2]
-        # Build the nodes_to_slots_mapping dict structure:
-        # {
-        #     "src_host:port": [
-        #         {"dest_host:port": "slot_range"},
-        #         ...
-        #     ],
-        #     ...
-        # }
-        nodes_to_slots_mapping = {}
-        for src_node, dest_node, slots in nodes_to_slots_mapping_data:
-            src_node_str = safe_str(src_node)
-            dest_node_str = safe_str(dest_node)
-            slots_str = safe_str(slots)
-
-            if src_node_str not in nodes_to_slots_mapping:
-                nodes_to_slots_mapping[src_node_str] = []
-            nodes_to_slots_mapping[src_node_str].append({dest_node_str: slots_str})
-
-        return OSSNodeMigratedNotification(id, nodes_to_slots_mapping)
+        pass
 
     @staticmethod
     def parse_maintenance_start_msg(response, notification_type):
@@ -221,9 +199,7 @@ class MaintenanceNotificationsParser:
         # Examples:
         # MIGRATING 1 10
         # FAILING_OVER 2 20
-        id = response[1]
-        ttl = response[2]
-        return notification_type(id, ttl)
+        pass
 
     @staticmethod
     def parse_maintenance_completed_msg(response, notification_type):
@@ -231,22 +207,12 @@ class MaintenanceNotificationsParser:
         # Examples:
         # MIGRATED 1
         # FAILED_OVER 2
-        id = response[1]
-        return notification_type(id)
+        pass
 
     @staticmethod
     def parse_moving_msg(response):
         # Expected message format is: MOVING <seq_number> <time> <endpoint>
-        id = response[1]
-        ttl = response[2]
-        if response[3] is None:
-            host, port = None, None
-        else:
-            value = safe_str(response[3])
-            host, port = value.split(":")
-            port = int(port) if port is not None else None
-
-        return NodeMovingNotification(id, host, port, ttl)
+        pass
 
 
 _INVALIDATION_MESSAGE = "invalidate"
@@ -380,16 +346,16 @@ class PushNotificationsParser(Protocol):
         self.pubsub_push_handler_func = pubsub_push_handler_func
 
     def set_invalidation_push_handler(self, invalidation_push_handler_func):
-        self.invalidation_push_handler_func = invalidation_push_handler_func
+        pass
 
     def set_node_moving_push_handler(self, node_moving_push_handler_func):
-        self.node_moving_push_handler_func = node_moving_push_handler_func
+        pass
 
     def set_maintenance_push_handler(self, maintenance_push_handler_func):
-        self.maintenance_push_handler_func = maintenance_push_handler_func
+        pass
 
     def set_oss_cluster_maint_push_handler(self, oss_cluster_maint_push_handler_func):
-        self.oss_cluster_maint_push_handler_func = oss_cluster_maint_push_handler_func
+        pass
 
 
 class AsyncPushNotificationsParser(Protocol):
@@ -474,16 +440,16 @@ class AsyncPushNotificationsParser(Protocol):
 
     def set_invalidation_push_handler(self, invalidation_push_handler_func):
         """Set the invalidation push handler function"""
-        self.invalidation_push_handler_func = invalidation_push_handler_func
+        pass
 
     def set_node_moving_push_handler(self, node_moving_push_handler_func):
-        self.node_moving_push_handler_func = node_moving_push_handler_func
+        pass
 
     def set_maintenance_push_handler(self, maintenance_push_handler_func):
-        self.maintenance_push_handler_func = maintenance_push_handler_func
+        pass
 
     def set_oss_cluster_maint_push_handler(self, oss_cluster_maint_push_handler_func):
-        self.oss_cluster_maint_push_handler_func = oss_cluster_maint_push_handler_func
+        pass
 
 
 class _AsyncRESPBase(AsyncBaseParser):

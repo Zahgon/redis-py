@@ -29,69 +29,29 @@ def list_or_args(keys: KeysT, args: Tuple[KeyT, ...]) -> List[KeyT]:
 
 def nativestr(x):
     """Return the decoded binary string, or a string, depending on type."""
-    r = x.decode("utf-8", "replace") if isinstance(x, bytes) else x
-    if r == "null":
-        return
-    return r
+    pass
 
 
 def delist(x):
     """Given a list of binaries, return the stringified version."""
-    if x is None:
-        return x
-    return [nativestr(obj) for obj in x]
+    pass
 
 
 def parse_to_list(response):
     """Optimistically parse the response to a list."""
-    res = []
-
-    special_values = {"infinity", "nan", "-infinity"}
-
-    if response is None:
-        return res
-
-    for item in response:
-        if item is None:
-            res.append(None)
-            continue
-        try:
-            item_str = nativestr(item)
-        except TypeError:
-            res.append(None)
-            continue
-
-        if isinstance(item_str, str) and item_str.lower() in special_values:
-            res.append(item_str)  # Keep as string
-        else:
-            try:
-                res.append(int(item))
-            except (ValueError, OverflowError, TypeError):
-                try:
-                    res.append(float(item))
-                except (ValueError, TypeError):
-                    res.append(item_str)
-
-    return res
+    pass
 
 
 def random_string(length=10):
     """
     Returns a random N character long string.
     """
-    return "".join(  # nosec
-        random.choice(string.ascii_lowercase) for x in range(length)
-    )
+    pass
 
 
 def decode_dict_keys(obj):
     """Decode the keys of the given dictionary with utf-8."""
-    newobj = copy.copy(obj)
-    for k in obj.keys():
-        if isinstance(k, bytes):
-            newobj[k.decode("utf-8")] = newobj[k]
-            newobj.pop(k)
-    return newobj
+    pass
 
 
 def get_protocol_version(client):
@@ -116,8 +76,7 @@ def at_most_one_value_set(iterable: Iterable[Any]):
         For example if the type of the values implement
         __len__ or __bool__ methods and they raise an error.
     """
-    values = (bool(x) for x in iterable)
-    return sum(values) <= 1
+    pass
 
 
 def partition_pubsub_subscriptions_by_handler(

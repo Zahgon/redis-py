@@ -89,26 +89,7 @@ class SearchCommands:
         ``AsyncPipeline.__init__`` so that the mapping is defined in a
         single place rather than duplicated across all three classes.
         """
-        self._RESP2_MODULE_CALLBACKS = {
-            INFO_CMD: self._parse_info,
-            SEARCH_CMD: self._parse_search,
-            HYBRID_CMD: self._parse_hybrid_search,
-            AGGREGATE_CMD: self._parse_aggregate,
-            PROFILE_CMD: self._parse_profile,
-            SPELLCHECK_CMD: self._parse_spellcheck,
-            CONFIG_CMD: self._parse_config_get,
-            SYNDUMP_CMD: self._parse_syndump,
-        }
-        self._RESP3_MODULE_CALLBACKS = {
-            INFO_CMD: self._parse_info_resp3,
-            SEARCH_CMD: self._parse_search_resp3,
-            HYBRID_CMD: self._parse_hybrid_search_resp3,
-            AGGREGATE_CMD: self._parse_aggregate_resp3,
-            PROFILE_CMD: self._parse_profile_resp3,
-            SPELLCHECK_CMD: self._parse_spellcheck_resp3,
-            CONFIG_CMD: self._parse_config_get_resp3,
-            SYNDUMP_CMD: self._parse_syndump_resp3,
-        }
+        pass
 
     # Commands whose parsers require a ``query`` kwarg.  When invoked as a
     # pipeline response-callback the kwarg is carried inside the options dict
@@ -138,18 +119,7 @@ class SearchCommands:
     )
 
     def _parse_info(self, res, **kwargs):
-        it = map(str_if_bytes, res)
-        info = dict(zip(it, it))
-
-        # Normalize RESP2 attributes from flat sublists to nested dicts
-        # to match RESP3 format: [{"identifier": ..., "type": ..., "flags": [...]}]
-        if "attributes" in info and isinstance(info["attributes"], list):
-            info["attributes"] = [
-                self._normalize_info_attribute(attr) if isinstance(attr, list) else attr
-                for attr in info["attributes"]
-            ]
-
-        return info
+        pass
 
     @staticmethod
     def _normalize_info_attribute(attr_list):
@@ -160,233 +130,42 @@ class SearchCommands:
         RESP3 format: {"identifier": name, "attribute": alias, "type": "TEXT",
                         "WEIGHT": "1", "flags": ["SORTABLE", "NOSTEM"]}
         """
-        result = {}
-        flags = []
-        pair_keys = SearchCommands._INFO_ATTR_PAIR_KEYS
-        i = 0
-        while i < len(attr_list):
-            key = str_if_bytes(attr_list[i])
-            if key in pair_keys and i + 1 < len(attr_list):
-                result[key] = str_if_bytes(attr_list[i + 1])
-                i += 2
-            else:
-                flags.append(key)
-                i += 1
-        result["flags"] = flags
-        return result
+        pass
 
     def _parse_search(self, res, **kwargs):
-        return Result(
-            res,
-            not kwargs["query"]._no_content,
-            duration=kwargs.get("duration", 0),
-            has_payload=kwargs["query"]._with_payloads,
-            with_scores=kwargs["query"]._with_scores,
-            field_encodings=kwargs["query"]._return_fields_decode_as,
-        )
+        pass
 
     def _parse_hybrid_search(self, res, **kwargs):
-        res_dict = pairs_to_dict(res, decode_keys=True)
-        if "cursor" in kwargs:
-            return HybridCursorResult(
-                search_cursor_id=int(res_dict["SEARCH"]),
-                vsim_cursor_id=int(res_dict["VSIM"]),
-            )
-
-        query = kwargs.get("query")
-        field_encodings = (
-            getattr(query, "_return_fields_decode_as", None) if query else None
-        )
-
-        results: List[Dict[str, Any]] = []
-        # the original results are a list of lists
-        # we convert them to a list of dicts
-        for res_item in res_dict["results"]:
-            item_dict = pairs_to_dict(res_item, decode_keys=True)
-            results.append(
-                {
-                    k: decode_field_value(v, k, field_encodings)
-                    for k, v in item_dict.items()
-                }
-            )
-
-        return HybridResult(
-            total_results=int(res_dict["total_results"]),
-            results=results,
-            warnings=[str_if_bytes(w) for w in res_dict["warnings"]],
-            execution_time=float(res_dict["execution_time"]),
-        )
+        pass
 
     def _parse_aggregate(self, res, **kwargs):
-        return self._get_aggregate_result(res, kwargs["query"], kwargs["has_cursor"])
+        pass
 
     def _parse_profile(self, res, **kwargs):
-        query = kwargs["query"]
-        if isinstance(query, AggregateRequest):
-            result = self._get_aggregate_result(res[0], query, query._cursor)
-        else:
-            result = Result(
-                res[0],
-                not query._no_content,
-                duration=kwargs["duration"],
-                has_payload=query._with_payloads,
-                with_scores=query._with_scores,
-            )
-
-        profile_data = res[1]
-        # >= 7.9.0 returns a flat key-value list ["Shards", [...], ...]
-        # Convert to dict to match RESP3 format.
-        # < 7.9.0 returns a list-of-pairs [[k, v], ...] where first element
-        # is a list — leave as-is.
-        if (
-            isinstance(profile_data, list)
-            and profile_data
-            and isinstance(profile_data[0], (str, bytes))
-        ):
-            profile_data = pairs_to_dict(profile_data, decode_keys=True)
-
-        return result, ProfileInformation(profile_data)
+        pass
 
     def _parse_spellcheck(self, res, **kwargs):
-        corrections = {}
-        if res == 0:
-            return corrections
-
-        for _correction in res:
-            if isinstance(_correction, int) and _correction == 0:
-                continue
-
-            if len(_correction) != 3:
-                continue
-            if not _correction[2]:
-                continue
-            if not _correction[2][0]:
-                continue
-
-            # For spellcheck output
-            # 1)  1) "TERM"
-            #     2) "{term1}"
-            #     3)  1)  1)  "{score1}"
-            #             2)  "{suggestion1}"
-            #         2)  1)  "{score2}"
-            #             2)  "{suggestion2}"
-            #
-            # Following dictionary will be made
-            # corrections = {
-            #     '{term1}': [
-            #         {'score': '{score1}', 'suggestion': '{suggestion1}'},
-            #         {'score': '{score2}', 'suggestion': '{suggestion2}'}
-            #     ]
-            # }
-            corrections[_correction[1]] = [
-                {"score": _item[0], "suggestion": _item[1]} for _item in _correction[2]
-            ]
-
-        return corrections
+        pass
 
     def _parse_config_get(self, res, **kwargs):
-        if not res:
-            return {}
-        return {str_if_bytes(kvs[0]): str_if_bytes(kvs[1]) for kvs in res}
+        pass
 
     def _parse_syndump(self, res, **kwargs):
-        if not res:
-            return {}
-        return {
-            str_if_bytes(res[i]): [str_if_bytes(s) for s in res[i + 1]]
-            if isinstance(res[i + 1], list)
-            else str_if_bytes(res[i + 1])
-            for i in range(0, len(res), 2)
-        }
+        pass
 
     # ---- RESP3 parsers ----
 
     def _parse_search_resp3(self, res, **kwargs):
         """Parse RESP3 FT.SEARCH response into a Result object."""
-        query = kwargs.get("query")
-        return Result.from_resp3(
-            res,
-            duration=kwargs.get("duration", 0),
-            with_scores=getattr(query, "_with_scores", False),
-            field_encodings=getattr(query, "_return_fields_decode_as", None),
-        )
+        pass
 
     def _parse_aggregate_resp3(self, res, **kwargs):
         """Parse RESP3 FT.AGGREGATE response into an AggregateResult object."""
-        query = kwargs.get("query")
-        has_cursor = kwargs.get("has_cursor", False)
-
-        # When has_cursor is True, RESP3 returns [data_dict, cursor_id]
-        cursor_id = 0
-        if has_cursor and isinstance(res, list):
-            data = res[0]
-            cursor_id = res[1] if len(res) > 1 else 0
-        else:
-            data = res
-
-        warnings = [str_if_bytes(w) for w in data.get("warning", [])]
-        total = data.get("total_results", 0)
-
-        rows = []
-        for result_item in data.get("results", []):
-            extra_attrs = result_item.get("extra_attributes", {})
-            # Convert dict to flat list [key, value, key, value, ...]
-            # to match RESP2 row format
-            flat = []
-            for k, v in extra_attrs.items():
-                flat.append(k)
-                flat.append(v)
-            rows.append(flat)
-
-        cursor = None
-        if has_cursor:
-            if isinstance(query, Cursor):
-                query.cid = cursor_id
-                cursor = query
-            else:
-                cursor = Cursor(cursor_id)
-
-        return AggregateResult(rows, cursor, None, total=total, warnings=warnings)
+        pass
 
     def _parse_hybrid_search_resp3(self, res, **kwargs):
         """Parse RESP3 FT.HYBRID response into HybridResult/HybridCursorResult."""
-        if "cursor" in kwargs:
-            return HybridCursorResult(
-                search_cursor_id=int(res["SEARCH"]),
-                vsim_cursor_id=int(res["VSIM"]),
-            )
-
-        query = kwargs.get("query")
-        field_encodings = (
-            getattr(query, "_return_fields_decode_as", None) if query else None
-        )
-
-        results: List[Dict[str, Any]] = []
-        for res_item in res.get("results", []):
-            if isinstance(res_item, dict):
-                results.append(
-                    {
-                        str_if_bytes(k): decode_field_value(
-                            v, str_if_bytes(k), field_encodings
-                        )
-                        for k, v in res_item.items()
-                    }
-                )
-            else:
-                item_dict = pairs_to_dict(res_item, decode_keys=True)
-                results.append(
-                    {
-                        k: decode_field_value(v, k, field_encodings)
-                        for k, v in item_dict.items()
-                    }
-                )
-
-        return HybridResult(
-            total_results=int(res.get("total_results", 0)),
-            results=results,
-            warnings=[str_if_bytes(w) for w in res.get("warnings", [])],
-            execution_time=float(res.get("execution_time", 0)),
-        )
+        pass
 
     def _parse_spellcheck_resp3(self, res, **kwargs):
         """Parse RESP3 FT.SPELLCHECK response into unified format.
@@ -396,27 +175,7 @@ class SearchCommands:
         Unified format (matches RESP2 parsed output):
             {"term": [{"score": score_str, "suggestion": suggestion}, ...], ...}
         """
-        corrections = {}
-        if not isinstance(res, dict):
-            return self._parse_spellcheck(res, **kwargs)
-        results = res.get("results", {})
-        for term, suggestions in results.items():
-            if not suggestions:
-                continue
-            term_corrections = []
-            for suggestion_dict in suggestions:
-                for suggestion, score in suggestion_dict.items():
-                    # Normalize score string to match RESP2 format:
-                    # RESP3 returns float 0.0 → "0.0", but RESP2 returns "0"
-                    score_str = str(score)
-                    if score_str.endswith(".0"):
-                        score_str = score_str[:-2]
-                    term_corrections.append(
-                        {"score": score_str, "suggestion": str(suggestion)}
-                    )
-            if term_corrections:
-                corrections[term] = term_corrections
-        return corrections
+        pass
 
     def _parse_profile_resp3(self, res, **kwargs):
         """Parse RESP3 FT.PROFILE response into (result, ProfileInformation) tuple.
@@ -429,62 +188,7 @@ class SearchCommands:
         when the connection uses RESP3.  In that case we delegate to the
         RESP2 ``_parse_profile`` parser.
         """
-        # Older RediSearch returns a list even in RESP3 mode – fall back
-        # to the RESP2 parser which already handles that format.
-        if isinstance(res, list):
-            return self._parse_profile(res, **kwargs)
-
-        query = kwargs["query"]
-        # RESP3 returns a dict with "Results" and "Profile" keys.
-        # Handle both decoded (str) and raw (bytes) keys.
-        # Use `is not None` instead of truthiness to avoid dropping falsy
-        # values such as empty dicts/lists.
-        results_data = res.get("Results")
-        if results_data is None:
-            results_data = res.get(b"Results")
-        if results_data is None:
-            results_data = res.get("results")
-        if results_data is None:
-            results_data = res.get(b"results")
-        if results_data is None:
-            results_data = res.get(0)
-        profile_data = res.get("Profile")
-        if profile_data is None:
-            profile_data = res.get(b"Profile")
-        if profile_data is None:
-            profile_data = res.get("profile")
-        if profile_data is None:
-            profile_data = res.get(b"profile")
-        if profile_data is None:
-            profile_data = res.get(1)
-        # On older servers (pre MOD-6816, e.g. Redis 7.2/7.4) the "Results"
-        # value is a bare list of result-item dicts, not the wrapper dict
-        # ``{"total_results": N, "results": [...], "warning": [...]}``.
-        # Wrap the list so downstream parsers receive the expected format.
-        if isinstance(results_data, list):
-            results_data = {
-                "total_results": len(results_data),
-                "results": results_data,
-            }
-        if isinstance(query, AggregateRequest):
-            result = self._parse_aggregate_resp3(
-                results_data, query=query, has_cursor=bool(query._cursor)
-            )
-        else:
-            result = Result.from_resp3(
-                results_data,
-                duration=kwargs.get("duration", 0),
-                with_scores=getattr(query, "_with_scores", False),
-            )
-        # Normalize profile data keys/values to strings
-        profile_data = self._to_string_recursive(profile_data)
-        # On pre-7.9.0 servers, convert RESP3 profile dict to the RESP2
-        # list-of-pairs format so consumers see a consistent structure
-        # regardless of protocol.  Post-7.9.0 responses contain a "Shards"
-        # key and are already handled uniformly by both parsers as dicts.
-        if isinstance(profile_data, dict) and "Shards" not in profile_data:
-            profile_data = self._resp3_profile_dict_to_list(profile_data)
-        return result, ProfileInformation(profile_data)
+        pass
 
     @staticmethod
     def _resp3_profile_dict_to_list(data):
@@ -501,40 +205,7 @@ class SearchCommands:
         dict as a separate sibling element in the parent flat list rather
         than keeping them nested inside a single value.
         """
-
-        def _is_list_of_dicts(obj):
-            return isinstance(obj, list) and obj and isinstance(obj[0], dict)
-
-        def _convert(obj, top_level=False):
-            if isinstance(obj, dict):
-                if top_level:
-                    # Top-level: list of [key, ...values] entries
-                    result = []
-                    for k, v in obj.items():
-                        entry = [k]
-                        if _is_list_of_dicts(v):
-                            for item in v:
-                                entry.append(_convert(item))
-                        else:
-                            entry.append(_convert(v))
-                        result.append(entry)
-                    return result
-                else:
-                    # Nested: flat alternating key-value list
-                    result = []
-                    for k, v in obj.items():
-                        result.append(k)
-                        if _is_list_of_dicts(v):
-                            for item in v:
-                                result.append(_convert(item))
-                        else:
-                            result.append(_convert(v))
-                    return result
-            elif isinstance(obj, list):
-                return [_convert(item) for item in obj]
-            return obj
-
-        return _convert(data, top_level=True)
+        pass
 
     @staticmethod
     def _to_string_recursive(obj):
@@ -543,18 +214,7 @@ class SearchCommands:
         Handles dicts, lists, and scalar values. Non-bytes, non-container
         values (int, float, None, bool) are left unchanged.
         """
-        if isinstance(obj, bytes):
-            return str_if_bytes(obj)
-        if isinstance(obj, dict):
-            return {
-                str_if_bytes(k) if isinstance(k, bytes) else k: (
-                    SearchCommands._to_string_recursive(v)
-                )
-                for k, v in obj.items()
-            }
-        if isinstance(obj, list):
-            return [SearchCommands._to_string_recursive(item) for item in obj]
-        return obj
+        pass
 
     def _parse_info_resp3(self, res, **kwargs):
         """Parse RESP3 FT.INFO response, normalising bytes to strings.
@@ -563,7 +223,7 @@ class SearchCommands:
         all keys and string-like values to ``str`` so that the returned
         dict has the same shape as the RESP2 parser output.
         """
-        return self._to_string_recursive(res)
+        pass
 
     def _parse_config_get_resp3(self, res, **kwargs):
         """Parse RESP3 FT.CONFIG GET response, normalising bytes to strings.
@@ -571,9 +231,7 @@ class SearchCommands:
         RESP3 already returns a dict, but keys and values are bytes.
         Convert them to match the RESP2 output format.
         """
-        if not res:
-            return {}
-        return {str_if_bytes(k): str_if_bytes(v) for k, v in res.items()}
+        pass
 
     def _parse_syndump_resp3(self, res, **kwargs):
         """Parse RESP3 FT.SYNDUMP response, normalising bytes to strings.
@@ -581,15 +239,13 @@ class SearchCommands:
         RESP3 already returns a dict, but keys and values are bytes.
         Convert them to match the RESP2 output format.
         """
-        if not res:
-            return {}
-        return self._to_string_recursive(res)
+        pass
 
     def batch_indexer(self, chunk_size=100):
         """
         Create a new batch indexer from the client with a given chunk size
         """
-        return self.BatchIndexer(self, chunk_size=chunk_size)
+        pass
 
     def create_index(
         self,
@@ -630,36 +286,7 @@ class SearchCommands:
             skip_initial_scan: If true, the initial scan and indexing will be skipped.
 
         """
-        args = [CREATE_CMD, self.index_name]
-        if definition is not None:
-            args += definition.args
-        if max_text_fields:
-            args.append(MAXTEXTFIELDS)
-        if temporary is not None and isinstance(temporary, int):
-            args.append(TEMPORARY)
-            args.append(temporary)
-        if no_term_offsets:
-            args.append(NOOFFSETS)
-        if no_highlight:
-            args.append(NOHL)
-        if no_field_flags:
-            args.append(NOFIELDS)
-        if no_term_frequencies:
-            args.append(NOFREQS)
-        if skip_initial_scan:
-            args.append(SKIPINITIALSCAN)
-        if stopwords is not None and isinstance(stopwords, (list, tuple, set)):
-            args += [STOPWORDS, len(stopwords)]
-            if len(stopwords) > 0:
-                args += list(stopwords)
-
-        args.append("SCHEMA")
-        try:
-            args += list(itertools.chain(*(f.redis_args() for f in fields)))
-        except TypeError:
-            args += fields.redis_args()
-
-        return self.execute_command(*args)
+        pass
 
     def alter_schema_add(self, fields: Union[Field, List[Field]]):
         """
@@ -672,14 +299,7 @@ class SearchCommands:
 
         For more information see `FT.ALTER <https://redis.io/commands/ft.alter>`_.
         """  # noqa
-
-        args = [ALTER_CMD, self.index_name, "SCHEMA", "ADD"]
-        try:
-            args += list(itertools.chain(*(f.redis_args() for f in fields)))
-        except TypeError:
-            args += fields.redis_args()
-
-        return self.execute_command(*args)
+        pass
 
     def dropindex(self, delete_documents: bool = False):
         """
@@ -693,18 +313,7 @@ class SearchCommands:
 
         For more information see `FT.DROPINDEX <https://redis.io/commands/ft.dropindex>`_.
         """  # noqa
-        args = [DROPINDEX_CMD, self.index_name]
-
-        delete_str = (
-            "DD"
-            if isinstance(delete_documents, bool) and delete_documents is True
-            else ""
-        )
-
-        if delete_str:
-            args.append(delete_str)
-
-        return self.execute_command(*args)
+        pass
 
     def _add_document(
         self,
@@ -722,31 +331,7 @@ class SearchCommands:
         """
         Internal add_document used for both batch and single doc indexing
         """
-
-        if partial or no_create:
-            replace = True
-
-        args = [ADD_CMD, self.index_name, doc_id, score]
-        if nosave:
-            args.append("NOSAVE")
-        if payload is not None:
-            args.append("PAYLOAD")
-            args.append(payload)
-        if replace:
-            args.append("REPLACE")
-            if partial:
-                args.append("PARTIAL")
-            if no_create:
-                args.append("NOCREATE")
-        if language:
-            args += ["LANGUAGE", language]
-        args.append("FIELDS")
-        args += list(itertools.chain(*fields.items()))
-
-        if conn is not None:
-            return conn.execute_command(*args)
-
-        return self.execute_command(*args)
+        pass
 
     def _add_document_hash(
         self, doc_id, conn=None, score=1.0, language=None, replace=False
@@ -754,19 +339,7 @@ class SearchCommands:
         """
         Internal add_document_hash used for both batch and single doc indexing
         """
-
-        args = [ADDHASH_CMD, self.index_name, doc_id, score]
-
-        if replace:
-            args.append("REPLACE")
-
-        if language:
-            args += ["LANGUAGE", language]
-
-        if conn is not None:
-            return conn.execute_command(*args)
-
-        return self.execute_command(*args)
+        pass
 
     @deprecated_function(
         version="2.0.0", reason="deprecated since redisearch 2.0, call hset instead"
@@ -811,18 +384,7 @@ class SearchCommands:
                     and/or indexed.
                     NOTE: Geo points shoule be encoded as strings of "lon,lat"
         """  # noqa
-        return self._add_document(
-            doc_id,
-            conn=None,
-            nosave=nosave,
-            score=score,
-            payload=payload,
-            replace=replace,
-            partial=partial,
-            language=language,
-            no_create=no_create,
-            **fields,
-        )
+        pass
 
     @deprecated_function(
         version="2.0.0", reason="deprecated since redisearch 2.0, call hset instead"
@@ -840,9 +402,7 @@ class SearchCommands:
                       perform an update and reindex the document
         - **language**: Specify the language used for document tokenization.
         """  # noqa
-        return self._add_document_hash(
-            doc_id, conn=None, score=score, language=language, replace=replace
-        )
+        pass
 
     @deprecated_function(version="2.0.0", reason="deprecated since redisearch 2.0")
     def delete_document(self, doc_id, conn=None, delete_actual_document=False):
@@ -855,14 +415,7 @@ class SearchCommands:
         - **delete_actual_document**: if set to True, RediSearch also delete
                                       the actual document if it is in the index
         """  # noqa
-        args = [DEL_CMD, self.index_name, doc_id]
-        if delete_actual_document:
-            args.append("DD")
-
-        if conn is not None:
-            return conn.execute_command(*args)
-
-        return self.execute_command(*args)
+        pass
 
     def load_document(self, id, field_encodings=None):
         """
@@ -872,18 +425,7 @@ class SearchCommands:
           If a field's encoding is ``None`` the raw bytes value is preserved
           (useful for binary data such as vectors).
         """
-        fields = self.client.hgetall(id)
-        fields = {
-            str_if_bytes(k): decode_field_value(v, str_if_bytes(k), field_encodings)
-            for k, v in fields.items()
-        }
-
-        try:
-            del fields["id"]
-        except KeyError:
-            pass
-
-        return Document(id=id, **fields)
+        pass
 
     @deprecated_function(version="2.0.0", reason="deprecated since redisearch 2.0")
     def get(self, *ids):
@@ -1000,32 +542,7 @@ class SearchCommands:
 
         For more information see `FT.SEARCH <https://redis.io/commands/ft.hybrid>`.
         """
-        index = self.index_name
-        options = {}
-        pieces = [HYBRID_CMD, index]
-        pieces.extend(query.get_args())
-        if combine_method:
-            pieces.extend(combine_method.get_args())
-        if post_processing:
-            pieces.extend(post_processing.build_args())
-        if params_substitution:
-            pieces.extend(self.get_params_args(params_substitution))
-        if timeout:
-            pieces.extend(("TIMEOUT", timeout))
-        if cursor:
-            options["cursor"] = True
-            pieces.extend(cursor.build_args())
-
-        if get_protocol_version(self.client) not in ["3", 3]:
-            options[NEVER_DECODE] = True
-        options["query"] = query
-
-        res = self.execute_command(*pieces, **options)
-
-        if isinstance(res, Pipeline):
-            return res
-
-        return self._parse_results(HYBRID_CMD, res, **options)
+        pass
 
     def explain(
         self,
@@ -1036,8 +553,7 @@ class SearchCommands:
 
         For more information see `FT.EXPLAIN <https://redis.io/commands/ft.explain>`_.
         """  # noqa
-        args, query_text = self._mk_query_args(query, query_params=query_params)
-        return self.execute_command(EXPLAIN_CMD, *args)
+        pass
 
     def explain_cli(self, query: Union[str, Query]):  # noqa
         raise NotImplementedError("EXPLAINCLI will not be implemented.")
@@ -1059,46 +575,12 @@ class SearchCommands:
 
         For more information see `FT.AGGREGATE <https://redis.io/commands/ft.aggregate>`_.
         """  # noqa
-        if isinstance(query, AggregateRequest):
-            has_cursor = bool(query._cursor)
-            cmd = [AGGREGATE_CMD, self.index_name] + query.build_args()
-        elif isinstance(query, Cursor):
-            has_cursor = True
-            cmd = [CURSOR_CMD, "READ", self.index_name] + query.build_args()
-        else:
-            raise ValueError("Bad query", query)
-        cmd += self.get_params_args(query_params)
-
-        raw = self.execute_command(*cmd, query=query, has_cursor=has_cursor)
-
-        if isinstance(raw, Pipeline):
-            return raw
-
-        return self._parse_results(
-            AGGREGATE_CMD, raw, query=query, has_cursor=has_cursor
-        )
+        pass
 
     def _get_aggregate_result(
         self, raw: List, query: Union[AggregateRequest, Cursor], has_cursor: bool
     ):
-        if has_cursor:
-            if isinstance(query, Cursor):
-                query.cid = raw[1]
-                cursor = query
-            else:
-                cursor = Cursor(raw[1])
-            raw = raw[0]
-        else:
-            cursor = None
-
-        if isinstance(query, AggregateRequest) and query._with_schema:
-            schema = raw[0]
-            rows = raw[2:]
-        else:
-            schema = None
-            rows = raw[1:]
-
-        return AggregateResult(rows, cursor, schema)
+        pass
 
     def profile(
         self,
@@ -1118,30 +600,7 @@ class SearchCommands:
         Each parameter has a name and a value.
 
         """
-        st = time.monotonic()
-        cmd = [PROFILE_CMD, self.index_name, ""]
-        if limited:
-            cmd.append("LIMITED")
-        cmd.append("QUERY")
-
-        if isinstance(query, AggregateRequest):
-            cmd[2] = "AGGREGATE"
-            cmd += query.build_args()
-        elif isinstance(query, Query):
-            cmd[2] = "SEARCH"
-            cmd += query.get_args()
-            cmd += self.get_params_args(query_params)
-        else:
-            raise ValueError("Must provide AggregateRequest object or Query object.")
-
-        res = self.execute_command(*cmd, query=query)
-
-        if isinstance(res, Pipeline):
-            return res
-
-        return self._parse_results(
-            PROFILE_CMD, res, query=query, duration=(time.monotonic() - st) * 1000.0
-        )
+        pass
 
     def spellcheck(self, query, distance=None, include=None, exclude=None):
         """
@@ -1157,19 +616,7 @@ class SearchCommands:
 
         For more information see `FT.SPELLCHECK <https://redis.io/commands/ft.spellcheck>`_.
         """  # noqa
-        cmd = [SPELLCHECK_CMD, self.index_name, query]
-        if distance:
-            cmd.extend(["DISTANCE", distance])
-
-        if include:
-            cmd.extend(["TERMS", "INCLUDE", include])
-
-        if exclude:
-            cmd.extend(["TERMS", "EXCLUDE", exclude])
-
-        res = self.execute_command(*cmd)
-
-        return self._parse_results(SPELLCHECK_CMD, res)
+        pass
 
     def dict_add(self, name: str, *terms: List[str]):
         """Adds terms to a dictionary.
@@ -1181,9 +628,7 @@ class SearchCommands:
 
         For more information see `FT.DICTADD <https://redis.io/commands/ft.dictadd>`_.
         """  # noqa
-        cmd = [DICT_ADD_CMD, name]
-        cmd.extend(terms)
-        return self.execute_command(*cmd)
+        pass
 
     def dict_del(self, name: str, *terms: List[str]):
         """Deletes terms from a dictionary.
@@ -1195,9 +640,7 @@ class SearchCommands:
 
         For more information see `FT.DICTDEL <https://redis.io/commands/ft.dictdel>`_.
         """  # noqa
-        cmd = [DICT_DEL_CMD, name]
-        cmd.extend(terms)
-        return self.execute_command(*cmd)
+        pass
 
     def dict_dump(self, name: str):
         """Dumps all terms in the given dictionary.
@@ -1208,8 +651,7 @@ class SearchCommands:
 
         For more information see `FT.DICTDUMP <https://redis.io/commands/ft.dictdump>`_.
         """  # noqa
-        cmd = [DICT_DUMP_CMD, name]
-        return self.execute_command(*cmd)
+        pass
 
     @deprecated_function(
         version="8.0.0",
@@ -1242,9 +684,7 @@ class SearchCommands:
 
         For more information see `FT.CONFIG GET <https://redis.io/commands/ft.config-get>`_.
         """  # noqa
-        cmd = [CONFIG_CMD, "GET", option]
-        res = self.execute_command(*cmd)
-        return self._parse_results(CONFIG_CMD, res)
+        pass
 
     def tagvals(self, tagfield: str):
         """
@@ -1256,8 +696,7 @@ class SearchCommands:
 
         For more information see `FT.TAGVALS <https://redis.io/commands/ft.tagvals>`_.
         """  # noqa
-
-        return self.execute_command(TAGVALS_CMD, self.index_name, tagfield)
+        pass
 
     def aliasadd(self, alias: str):
         """
@@ -1269,8 +708,7 @@ class SearchCommands:
 
         For more information see `FT.ALIASADD <https://redis.io/commands/ft.aliasadd>`_.
         """  # noqa
-
-        return self.execute_command(ALIAS_ADD_CMD, alias, self.index_name)
+        pass
 
     def aliasupdate(self, alias: str):
         """
@@ -1282,8 +720,7 @@ class SearchCommands:
 
         For more information see `FT.ALIASUPDATE <https://redis.io/commands/ft.aliasupdate>`_.
         """  # noqa
-
-        return self.execute_command(ALIAS_UPDATE_CMD, alias, self.index_name)
+        pass
 
     def aliasdel(self, alias: str):
         """
@@ -1295,7 +732,7 @@ class SearchCommands:
 
         For more information see `FT.ALIASDEL <https://redis.io/commands/ft.aliasdel>`_.
         """  # noqa
-        return self.execute_command(ALIAS_DEL_CMD, alias)
+        pass
 
     def sugadd(self, key, *suggestions, **kwargs):
         """
@@ -1306,19 +743,7 @@ class SearchCommands:
 
         For more information see `FT.SUGADD <https://redis.io/commands/ft.sugadd/>`_.
         """  # noqa
-        # If Transaction is not False it will MULTI/EXEC which will error
-        pipe = self.pipeline(transaction=False)
-        for sug in suggestions:
-            args = [SUGADD_COMMAND, key, sug.string, sug.score]
-            if kwargs.get("increment"):
-                args.append("INCR")
-            if sug.payload:
-                args.append("PAYLOAD")
-                args.append(sug.payload)
-
-            pipe.execute_command(*args)
-
-        return pipe.execute()[-1]
+        pass
 
     def suglen(self, key: str) -> int:
         """
@@ -1326,7 +751,7 @@ class SearchCommands:
 
         For more information see `FT.SUGLEN <https://redis.io/commands/ft.suglen>`_.
         """  # noqa
-        return self.execute_command(SUGLEN_COMMAND, key)
+        pass
 
     def sugdel(self, key: str, string: str) -> int:
         """
@@ -1335,7 +760,7 @@ class SearchCommands:
 
         For more information see `FT.SUGDEL <https://redis.io/commands/ft.sugdel>`_.
         """  # noqa
-        return self.execute_command(SUGDEL_COMMAND, key, string)
+        pass
 
     def sugget(
         self,
@@ -1377,21 +802,7 @@ class SearchCommands:
 
         For more information see `FT.SUGGET <https://redis.io/commands/ft.sugget>`_.
         """  # noqa
-        args = [SUGGET_COMMAND, key, prefix, "MAX", num]
-        if fuzzy:
-            args.append(FUZZY)
-        if with_scores:
-            args.append(WITHSCORES)
-        if with_payloads:
-            args.append(WITHPAYLOADS)
-
-        res = self.execute_command(*args)
-        results = []
-        if not res:
-            return results
-
-        parser = SuggestionParser(with_scores, with_payloads, res)
-        return [s for s in parser]
+        pass
 
     def synupdate(self, groupid: str, skipinitial: bool = False, *terms: List[str]):
         """
@@ -1411,11 +822,7 @@ class SearchCommands:
 
         For more information see `FT.SYNUPDATE <https://redis.io/commands/ft.synupdate>`_.
         """  # noqa
-        cmd = [SYNUPDATE_CMD, self.index_name, groupid]
-        if skipinitial:
-            cmd.extend(["SKIPINITIALSCAN"])
-        cmd.extend(terms)
-        return self.execute_command(*cmd)
+        pass
 
     def syndump(self):
         """
@@ -1426,8 +833,7 @@ class SearchCommands:
 
         For more information see `FT.SYNDUMP <https://redis.io/commands/ft.syndump>`_.
         """  # noqa
-        res = self.execute_command(SYNDUMP_CMD, self.index_name)
-        return self._parse_results(SYNDUMP_CMD, res)
+        pass
 
 
 class AsyncSearchCommands(SearchCommands):
@@ -1503,32 +909,7 @@ class AsyncSearchCommands(SearchCommands):
 
         For more information see `FT.SEARCH <https://redis.io/commands/ft.hybrid>`.
         """
-        index = self.index_name
-        options = {}
-        pieces = [HYBRID_CMD, index]
-        pieces.extend(query.get_args())
-        if combine_method:
-            pieces.extend(combine_method.get_args())
-        if post_processing:
-            pieces.extend(post_processing.build_args())
-        if params_substitution:
-            pieces.extend(self.get_params_args(params_substitution))
-        if timeout:
-            pieces.extend(("TIMEOUT", timeout))
-        if cursor:
-            options["cursor"] = True
-            pieces.extend(cursor.build_args())
-
-        if get_protocol_version(self.client) not in ["3", 3]:
-            options[NEVER_DECODE] = True
-        options["query"] = query
-
-        res = await self.execute_command(*pieces, **options)
-
-        if isinstance(res, Pipeline):
-            return res
-
-        return self._parse_results(HYBRID_CMD, res, **options)
+        pass
 
     async def aggregate(
         self,
@@ -1547,24 +928,7 @@ class AsyncSearchCommands(SearchCommands):
 
         For more information see `FT.AGGREGATE <https://redis.io/commands/ft.aggregate>`_.
         """  # noqa
-        if isinstance(query, AggregateRequest):
-            has_cursor = bool(query._cursor)
-            cmd = [AGGREGATE_CMD, self.index_name] + query.build_args()
-        elif isinstance(query, Cursor):
-            has_cursor = True
-            cmd = [CURSOR_CMD, "READ", self.index_name] + query.build_args()
-        else:
-            raise ValueError("Bad query", query)
-        cmd += self.get_params_args(query_params)
-
-        raw = await self.execute_command(*cmd, query=query, has_cursor=has_cursor)
-
-        if isinstance(raw, Pipeline):
-            return raw
-
-        return self._parse_results(
-            AGGREGATE_CMD, raw, query=query, has_cursor=has_cursor
-        )
+        pass
 
     async def profile(
         self,
@@ -1584,30 +948,7 @@ class AsyncSearchCommands(SearchCommands):
         Each parameter has a name and a value.
 
         """
-        st = time.monotonic()
-        cmd = [PROFILE_CMD, self.index_name, ""]
-        if limited:
-            cmd.append("LIMITED")
-        cmd.append("QUERY")
-
-        if isinstance(query, AggregateRequest):
-            cmd[2] = "AGGREGATE"
-            cmd += query.build_args()
-        elif isinstance(query, Query):
-            cmd[2] = "SEARCH"
-            cmd += query.get_args()
-            cmd += self.get_params_args(query_params)
-        else:
-            raise ValueError("Must provide AggregateRequest object or Query object.")
-
-        res = await self.execute_command(*cmd, query=query)
-
-        if isinstance(res, Pipeline):
-            return res
-
-        return self._parse_results(
-            PROFILE_CMD, res, query=query, duration=(time.monotonic() - st) * 1000.0
-        )
+        pass
 
     async def spellcheck(self, query, distance=None, include=None, exclude=None):
         """
@@ -1623,19 +964,7 @@ class AsyncSearchCommands(SearchCommands):
 
         For more information see `FT.SPELLCHECK <https://redis.io/commands/ft.spellcheck>`_.
         """  # noqa
-        cmd = [SPELLCHECK_CMD, self.index_name, query]
-        if distance:
-            cmd.extend(["DISTANCE", distance])
-
-        if include:
-            cmd.extend(["TERMS", "INCLUDE", include])
-
-        if exclude:
-            cmd.extend(["TERMS", "EXCLUDE", exclude])
-
-        res = await self.execute_command(*cmd)
-
-        return self._parse_results(SPELLCHECK_CMD, res)
+        pass
 
     @deprecated_function(
         version="8.0.0",
@@ -1668,10 +997,7 @@ class AsyncSearchCommands(SearchCommands):
 
         For more information see `FT.CONFIG GET <https://redis.io/commands/ft.config-get>`_.
         """  # noqa
-        cmd = [CONFIG_CMD, "GET", option]
-        res = {}
-        res = await self.execute_command(*cmd)
-        return self._parse_results(CONFIG_CMD, res)
+        pass
 
     async def load_document(self, id, field_encodings=None):
         """
@@ -1681,18 +1007,7 @@ class AsyncSearchCommands(SearchCommands):
           If a field's encoding is ``None`` the raw bytes value is preserved
           (useful for binary data such as vectors).
         """
-        fields = await self.client.hgetall(id)
-        fields = {
-            str_if_bytes(k): decode_field_value(v, str_if_bytes(k), field_encodings)
-            for k, v in fields.items()
-        }
-
-        try:
-            del fields["id"]
-        except KeyError:
-            pass
-
-        return Document(id=id, **fields)
+        pass
 
     async def sugadd(self, key, *suggestions, **kwargs):
         """
@@ -1703,19 +1018,7 @@ class AsyncSearchCommands(SearchCommands):
 
         For more information see `FT.SUGADD <https://redis.io/commands/ft.sugadd>`_.
         """  # noqa
-        # If Transaction is not False it will MULTI/EXEC which will error
-        pipe = self.pipeline(transaction=False)
-        for sug in suggestions:
-            args = [SUGADD_COMMAND, key, sug.string, sug.score]
-            if kwargs.get("increment"):
-                args.append("INCR")
-            if sug.payload:
-                args.append("PAYLOAD")
-                args.append(sug.payload)
-
-            pipe.execute_command(*args)
-
-        return (await pipe.execute())[-1]
+        pass
 
     async def sugget(
         self,
@@ -1757,18 +1060,4 @@ class AsyncSearchCommands(SearchCommands):
 
         For more information see `FT.SUGGET <https://redis.io/commands/ft.sugget>`_.
         """  # noqa
-        args = [SUGGET_COMMAND, key, prefix, "MAX", num]
-        if fuzzy:
-            args.append(FUZZY)
-        if with_scores:
-            args.append(WITHSCORES)
-        if with_payloads:
-            args.append(WITHPAYLOADS)
-
-        ret = await self.execute_command(*args)
-        results = []
-        if not ret:
-            return results
-
-        parser = SuggestionParser(with_scores, with_payloads, ret)
-        return [s for s in parser]
+        pass

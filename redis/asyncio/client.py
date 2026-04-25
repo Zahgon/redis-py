@@ -457,7 +457,7 @@ class Redis(
 
     def set_response_callback(self, command: str, callback: ResponseCallbackT):
         """Set a custom Response Callback"""
-        self.response_callbacks[command] = callback
+        pass
 
     def get_encoder(self):
         """Get the connection pool's encoder"""
@@ -468,11 +468,10 @@ class Redis(
         return self.connection_pool.connection_kwargs
 
     def get_retry(self) -> Optional[Retry]:
-        return self.get_connection_kwargs().get("retry")
+        pass
 
     def set_retry(self, retry: Retry) -> None:
-        self.get_connection_kwargs().update({"retry": retry})
-        self.connection_pool.set_retry(retry)
+        pass
 
     def load_external_module(self, funcname, func):
         """
@@ -495,7 +494,7 @@ class Redis(
         For a concrete example see the reimport of the redisjson module in
         tests/test_connection.py::test_loading_external_modules
         """
-        setattr(self, funcname, func)
+        pass
 
     def pipeline(
         self, transaction: bool = True, shard_hint: Optional[str] = None
@@ -608,18 +607,7 @@ class Redis(
         the token set by the thread that acquired the lock. Our assumption
         is that these cases aren't common and as such default to using
         thread local storage."""
-        if lock_class is None:
-            lock_class = Lock
-        return lock_class(
-            self,
-            name,
-            timeout=timeout,
-            sleep=sleep,
-            blocking=blocking,
-            blocking_timeout=blocking_timeout,
-            thread_local=thread_local,
-            raise_on_release_error=raise_on_release_error,
-        )
+        pass
 
     def pubsub(self, **kwargs) -> "PubSub":
         """
@@ -650,21 +638,13 @@ class Redis(
                                       confirmations are not returned by
                                       get_message/listen.
         """
-        from redis.asyncio.keyspace_notifications import AsyncKeyspaceNotifications
-
-        return AsyncKeyspaceNotifications(
-            self,
-            key_prefix=key_prefix,
-            ignore_subscribe_messages=ignore_subscribe_messages,
-        )
+        pass
 
     def monitor(self) -> "Monitor":
-        return Monitor(self.connection_pool)
+        pass
 
     def client(self) -> "Redis":
-        return self.__class__(
-            connection_pool=self.connection_pool, single_connection_client=True
-        )
+        pass
 
     async def __aenter__(self: _RedisT) -> _RedisT:
         """
@@ -686,18 +666,14 @@ class Redis(
         Helper coroutine to increment the usage counter while holding the lock.
         Returns the new value of the usage counter.
         """
-        async with self._usage_lock:
-            self._usage_counter += 1
-            return self._usage_counter
+        pass
 
     async def _decrement_usage(self) -> int:
         """
         Helper coroutine to decrement the usage counter while holding the lock.
         Returns the new value of the usage counter.
         """
-        async with self._usage_lock:
-            self._usage_counter -= 1
-            return self._usage_counter
+        pass
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         """
@@ -809,11 +785,7 @@ class Redis(
         actual_retry_attempts = 0
 
         def failure_callback(error, failure_count):
-            nonlocal actual_retry_attempts
-            actual_retry_attempts = failure_count
-            return self._close_connection(
-                conn, error, failure_count, start_time, command_name
-            )
+            pass
 
         if self.single_connection_client:
             await self._single_conn_lock.acquire()
@@ -1091,7 +1063,7 @@ class PubSub:
     @property
     def subscribed(self):
         """Indicates if there are subscriptions to any channels or patterns"""
-        return bool(self.channels or self.patterns or self.shard_channels)
+        pass
 
     async def execute_command(self, *args: EncodableT):
         """Execute a publish/subscribe command"""
@@ -1176,9 +1148,7 @@ class PubSub:
         actual_retry_attempts = 0
 
         def failure_callback(error, failure_count):
-            nonlocal actual_retry_attempts
-            actual_retry_attempts = failure_count
-            return self._reconnect(conn, error, failure_count, start_time, command_name)
+            pass
 
         try:
             response = await conn.retry.call_with_retry(
@@ -1379,31 +1349,14 @@ class PubSub:
         when a message is received on that channel rather than producing a message via
         ``listen()`` or ``get_sharded_message()``.
         """
-        if args:
-            args = list_or_args(args[0], args[1:])
-        new_s_channels = dict.fromkeys(args)
-        new_s_channels.update(kwargs)
-        ret_val = await self.execute_command("SSUBSCRIBE", *new_s_channels.keys())
-        # update the s_channels dict AFTER we send the command. we don't want to
-        # subscribe twice to these channels, once for the command and again
-        # for the reconnection.
-        new_s_channels = self._normalize_keys(new_s_channels)
-        self.shard_channels.update(new_s_channels)
-        self.pending_unsubscribe_shard_channels.difference_update(new_s_channels)
-        return ret_val
+        pass
 
     def sunsubscribe(self, *args, target_node=None) -> Awaitable:
         """
         Unsubscribe from the supplied shard_channels. If empty, unsubscribe from
         all shard_channels
         """
-        if args:
-            args = list_or_args(args[0], args[1:])
-            s_channels = self._normalize_keys(dict.fromkeys(args))
-        else:
-            s_channels = self.shard_channels
-        self.pending_unsubscribe_shard_channels.update(s_channels)
-        return self.execute_command("SUNSUBSCRIBE", *args)
+        pass
 
     async def listen(self) -> AsyncIterator:
         """Listen for messages on channels this client has been subscribed to"""
@@ -1650,7 +1603,7 @@ class Pipeline(Redis):  # lgtm [py/init-calls-subclass]
         return True
 
     async def _async_self(self):
-        return self
+        pass
 
     async def reset(self):
         self.command_stack = []
@@ -1685,13 +1638,7 @@ class Pipeline(Redis):  # lgtm [py/init-calls-subclass]
         Start a transactional block of the pipeline after WATCH commands
         are issued. End the transactional block with `execute`.
         """
-        if self.explicit_transaction:
-            raise RedisError("Cannot issue nested calls to MULTI")
-        if self.command_stack:
-            raise RedisError(
-                "Commands without an initial WATCH have already been issued"
-            )
-        self.explicit_transaction = True
+        pass
 
     def execute_command(
         self, *args, **kwargs
@@ -1762,11 +1709,7 @@ class Pipeline(Redis):  # lgtm [py/init-calls-subclass]
         actual_retry_attempts = 0
 
         def failure_callback(error, failure_count):
-            nonlocal actual_retry_attempts
-            actual_retry_attempts = failure_count
-            return self._disconnect_reset_raise_on_watching(
-                conn, error, failure_count, start_time, command_name
-            )
+            pass
 
         try:
             response = await conn.retry.call_with_retry(
@@ -1895,21 +1838,7 @@ class Pipeline(Redis):  # lgtm [py/init-calls-subclass]
         self, connection: Connection, commands: CommandStackT, raise_on_error: bool
     ):
         # build up all commands into a single request to increase network perf
-        all_cmds = connection.pack_commands([args for args, _ in commands])
-        await connection.send_packed_command(all_cmds)
-
-        response = []
-        for args, options in commands:
-            try:
-                response.append(
-                    await self.parse_response(connection, args[0], **options)
-                )
-            except ResponseError as e:
-                response.append(e)
-
-        if raise_on_error:
-            self.raise_first_error(commands, response)
-        return response
+        pass
 
     def raise_first_error(self, commands: CommandStackT, response: Iterable[Any]):
         for i, r in enumerate(response):
@@ -2018,11 +1947,7 @@ class Pipeline(Redis):  # lgtm [py/init-calls-subclass]
         actual_retry_attempts = 0
 
         def failure_callback(error, failure_count):
-            nonlocal actual_retry_attempts
-            actual_retry_attempts = failure_count
-            return self._disconnect_raise_on_watching(
-                conn, error, failure_count, start_time, operation_name
-            )
+            pass
 
         try:
             response = await conn.retry.call_with_retry(
@@ -2057,7 +1982,7 @@ class Pipeline(Redis):  # lgtm [py/init-calls-subclass]
         """Flushes all previously queued commands
         See: https://redis.io/commands/DISCARD
         """
-        await self.execute_command("DISCARD")
+        pass
 
     async def watch(self, *names: KeyT):
         """Watches the values at keys ``names``"""
@@ -2067,4 +1992,4 @@ class Pipeline(Redis):  # lgtm [py/init-calls-subclass]
 
     async def unwatch(self):
         """Unwatches all previously specified keys"""
-        return self.watching and await self.execute_command("UNWATCH") or True
+        pass

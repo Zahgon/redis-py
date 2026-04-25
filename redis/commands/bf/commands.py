@@ -98,10 +98,7 @@ class BFCommands:
         Default expansion value is 2. By default, filter is auto-scaling.
         For more information see `BF.RESERVE <https://redis.io/commands/bf.reserve>`_.
         """  # noqa
-        params = [key, errorRate, capacity]
-        self.append_expansion(params, expansion)
-        self.append_no_scale(params, noScale)
-        return self.execute_command(BF_RESERVE, *params)
+        pass
 
     reserve = create
 
@@ -129,7 +126,7 @@ class BFCommands:
         Add to a Bloom Filter `key` multiple `items`.
         For more information see `BF.MADD <https://redis.io/commands/bf.madd>`_.
         """  # noqa
-        return self.execute_command(BF_MADD, key, *items)
+        pass
 
     @overload
     def insert(
@@ -207,7 +204,7 @@ class BFCommands:
         Check whether `items` exist in Bloom Filter `key`.
         For more information see `BF.MEXISTS <https://redis.io/commands/bf.mexists>`_.
         """  # noqa
-        return self.execute_command(BF_MEXISTS, key, *items)
+        pass
 
     @overload
     def scandump(self: SyncClientProtocol, key, iter) -> BloomScanDumpResponse: ...
@@ -228,10 +225,7 @@ class BFCommands:
         This command will return successive (iter, data) pairs until (0, NULL) to indicate completion.
         For more information see `BF.SCANDUMP <https://redis.io/commands/bf.scandump>`_.
         """  # noqa
-        params = [key, iter]
-        options = {}
-        options[NEVER_DECODE] = []
-        return self.execute_command(BF_SCANDUMP, *params, **options)
+        pass
 
     @overload
     def loadchunk(self: SyncClientProtocol, key, iter, data) -> bytes | str: ...
@@ -250,7 +244,7 @@ class BFCommands:
         Ensure that the bloom filter will not be modified between invocations.
         For more information see `BF.LOADCHUNK <https://redis.io/commands/bf.loadchunk>`_.
         """  # noqa
-        return self.execute_command(BF_LOADCHUNK, key, iter, data)
+        pass
 
     @overload
     def info(self: SyncClientProtocol, key) -> BFInfo: ...
@@ -277,7 +271,7 @@ class BFCommands:
         (items that caused at least one bit to be set in at least one sub-filter).
         For more information see `BF.CARD <https://redis.io/commands/bf.card>`_.
         """  # noqa
-        return self.execute_command(BF_CARD, key)
+        pass
 
 
 class CFCommands:
@@ -310,11 +304,7 @@ class CFCommands:
         Create a new Cuckoo Filter `key` an initial `capacity` items.
         For more information see `CF.RESERVE <https://redis.io/commands/cf.reserve>`_.
         """  # noqa
-        params = [key, capacity]
-        self.append_expansion(params, expansion)
-        self.append_bucket_size(params, bucket_size)
-        self.append_max_iterations(params, max_iterations)
-        return self.execute_command(CF_RESERVE, *params)
+        pass
 
     reserve = create
 
@@ -343,7 +333,7 @@ class CFCommands:
         Command might be slower that `add`.
         For more information see `CF.ADDNX <https://redis.io/commands/cf.addnx>`_.
         """  # noqa
-        return self.execute_command(CF_ADDNX, key, item)
+        pass
 
     @overload
     def insert(
@@ -389,11 +379,7 @@ class CFCommands:
         `items` must be provided as a list.
         For more information see `CF.INSERTNX <https://redis.io/commands/cf.insertnx>`_.
         """  # noqa
-        params = [key]
-        self.append_capacity(params, capacity)
-        self.append_no_create(params, nocreate)
-        self.append_items(params, items)
-        return self.execute_command(CF_INSERTNX, *params)
+        pass
 
     @overload
     def exists(self: SyncClientProtocol, key, item) -> int: ...
@@ -419,7 +405,7 @@ class CFCommands:
         Check whether an `items` exist in Cuckoo Filter `key`.
         For more information see `CF.MEXISTS <https://redis.io/commands/cf.mexists>`_.
         """  # noqa
-        return self.execute_command(CF_MEXISTS, key, *items)
+        pass
 
     @overload
     def delete(self: SyncClientProtocol, key, item) -> int: ...
@@ -445,7 +431,7 @@ class CFCommands:
         Return the number of times an `item` may be in the `key`.
         For more information see `CF.COUNT <https://redis.io/commands/cf.count>`_.
         """  # noqa
-        return self.execute_command(CF_COUNT, key, item)
+        pass
 
     @overload
     def scandump(self: SyncClientProtocol, key, iter) -> BloomScanDumpResponse: ...
@@ -468,7 +454,7 @@ class CFCommands:
         (0, NULL) to indicate completion.
         For more information see `CF.SCANDUMP <https://redis.io/commands/cf.scandump>`_.
         """  # noqa
-        return self.execute_command(CF_SCANDUMP, key, iter)
+        pass
 
     @overload
     def loadchunk(self: SyncClientProtocol, key, iter, data) -> bytes | str: ...
@@ -486,7 +472,7 @@ class CFCommands:
         Ensure that the Cuckoo filter will not be modified between invocations.
         For more information see `CF.LOADCHUNK <https://redis.io/commands/cf.loadchunk>`_.
         """  # noqa
-        return self.execute_command(CF_LOADCHUNK, key, iter, data)
+        pass
 
     @overload
     def info(self: SyncClientProtocol, key) -> CFInfo: ...
@@ -520,7 +506,7 @@ class TOPKCommands:
         positives `errorRate` expected entries to be inserted as `size`.
         For more information see `TOPK.RESERVE <https://redis.io/commands/topk.reserve>`_.
         """  # noqa
-        return self.execute_command(TOPK_RESERVE, key, k, width, depth, decay)
+        pass
 
     @overload
     def add(self: SyncClientProtocol, key, *items) -> list[bytes | str | None]: ...
@@ -561,9 +547,7 @@ class TOPKCommands:
 
         >>> topkincrby('A', ['foo'], [1])
         """  # noqa
-        params = [key]
-        self.append_items_and_increments(params, items, increments)
-        return self.execute_command(TOPK_INCRBY, *params)
+        pass
 
     @overload
     def query(self: SyncClientProtocol, key, *items) -> list[int]: ...
@@ -576,7 +560,7 @@ class TOPKCommands:
         Check whether one `item` or more is a Top-K item at `key`.
         For more information see `TOPK.QUERY <https://redis.io/commands/topk.query>`_.
         """  # noqa
-        return self.execute_command(TOPK_QUERY, key, *items)
+        pass
 
     @overload
     def count(self: SyncClientProtocol, key, *items) -> list[int]: ...
@@ -590,7 +574,7 @@ class TOPKCommands:
         Return count for one `item` or more from `key`.
         For more information see `TOPK.COUNT <https://redis.io/commands/topk.count>`_.
         """  # noqa
-        return self.execute_command(TOPK_COUNT, key, *items)
+        pass
 
     @overload
     def list(
@@ -611,10 +595,7 @@ class TOPKCommands:
         with probabilistic count in Top-K list of `key`.
         For more information see `TOPK.LIST <https://redis.io/commands/topk.list>`_.
         """  # noqa
-        params = [key]
-        if withcount:
-            params.append("WITHCOUNT")
-        return self.execute_command(TOPK_LIST, *params)
+        pass
 
     @overload
     def info(self: SyncClientProtocol, key) -> TopKInfo: ...
@@ -642,7 +623,7 @@ class TDigestCommands:
         Allocate the memory and initialize the t-digest.
         For more information see `TDIGEST.CREATE <https://redis.io/commands/tdigest.create>`_.
         """  # noqa
-        return self.execute_command(TDIGEST_CREATE, key, "COMPRESSION", compression)
+        pass
 
     @overload
     def reset(self: SyncClientProtocol, key) -> bytes | str: ...
@@ -703,12 +684,7 @@ class TDigestCommands:
 
         For more information see `TDIGEST.MERGE <https://redis.io/commands/tdigest.merge>`_.
         """  # noqa
-        params = [destination_key, num_keys, *keys]
-        if compression is not None:
-            params.extend(["COMPRESSION", compression])
-        if override:
-            params.append("OVERRIDE")
-        return self.execute_command(TDIGEST_MERGE, *params)
+        pass
 
     @overload
     def min(self: SyncClientProtocol, key) -> float: ...
@@ -721,7 +697,7 @@ class TDigestCommands:
         Return minimum value from the sketch `key`. Will return DBL_MAX if the sketch is empty.
         For more information see `TDIGEST.MIN <https://redis.io/commands/tdigest.min>`_.
         """  # noqa
-        return self.execute_command(TDIGEST_MIN, key)
+        pass
 
     @overload
     def max(self: SyncClientProtocol, key) -> float: ...
@@ -734,7 +710,7 @@ class TDigestCommands:
         Return maximum value from the sketch `key`. Will return DBL_MIN if the sketch is empty.
         For more information see `TDIGEST.MAX <https://redis.io/commands/tdigest.max>`_.
         """  # noqa
-        return self.execute_command(TDIGEST_MAX, key)
+        pass
 
     @overload
     def quantile(
@@ -755,7 +731,7 @@ class TDigestCommands:
         specified cutoffs. (Multiple quantiles can be returned with one call)
         For more information see `TDIGEST.QUANTILE <https://redis.io/commands/tdigest.quantile>`_.
         """  # noqa
-        return self.execute_command(TDIGEST_QUANTILE, key, quantile, *quantiles)
+        pass
 
     @overload
     def cdf(self: SyncClientProtocol, key, value, *values) -> list[float]: ...
@@ -770,7 +746,7 @@ class TDigestCommands:
         Return double fraction of all points added which are <= value.
         For more information see `TDIGEST.CDF <https://redis.io/commands/tdigest.cdf>`_.
         """  # noqa
-        return self.execute_command(TDIGEST_CDF, key, value, *values)
+        pass
 
     @overload
     def info(self: SyncClientProtocol, key) -> TDigestInfo: ...
@@ -804,9 +780,7 @@ class TDigestCommands:
         the low and high cutoff quantiles.
         For more information see `TDIGEST.TRIMMED_MEAN <https://redis.io/commands/tdigest.trimmed_mean>`_.
         """  # noqa
-        return self.execute_command(
-            TDIGEST_TRIMMED_MEAN, key, low_cut_quantile, high_cut_quantile
-        )
+        pass
 
     @overload
     def rank(self: SyncClientProtocol, key, value, *values) -> list[int]: ...
@@ -823,7 +797,7 @@ class TDigestCommands:
 
         For more information see `TDIGEST.RANK <https://redis.io/commands/tdigest.rank>`_.
         """  # noqa
-        return self.execute_command(TDIGEST_RANK, key, value, *values)
+        pass
 
     @overload
     def revrank(self: SyncClientProtocol, key, value, *values) -> list[int]: ...
@@ -840,7 +814,7 @@ class TDigestCommands:
 
         For more information see `TDIGEST.REVRANK <https://redis.io/commands/tdigest.revrank>`_.
         """  # noqa
-        return self.execute_command(TDIGEST_REVRANK, key, value, *values)
+        pass
 
     @overload
     def byrank(self: SyncClientProtocol, key, rank, *ranks) -> list[float]: ...
@@ -856,7 +830,7 @@ class TDigestCommands:
 
         For more information see `TDIGEST.BY_RANK <https://redis.io/commands/tdigest.by_rank>`_.
         """  # noqa
-        return self.execute_command(TDIGEST_BYRANK, key, rank, *ranks)
+        pass
 
     @overload
     def byrevrank(self: SyncClientProtocol, key, rank, *ranks) -> list[float]: ...
@@ -872,7 +846,7 @@ class TDigestCommands:
 
         For more information see `TDIGEST.BY_REVRANK <https://redis.io/commands/tdigest.by_revrank>`_.
         """  # noqa
-        return self.execute_command(TDIGEST_BYREVRANK, key, rank, *ranks)
+        pass
 
 
 class CMSCommands:
@@ -889,7 +863,7 @@ class CMSCommands:
         Initialize a Count-Min Sketch `key` to dimensions (`width`, `depth`) specified by user.
         For more information see `CMS.INITBYDIM <https://redis.io/commands/cms.initbydim>`_.
         """  # noqa
-        return self.execute_command(CMS_INITBYDIM, key, width, depth)
+        pass
 
     @overload
     def initbyprob(self: SyncClientProtocol, key, error, probability) -> bool: ...
@@ -904,7 +878,7 @@ class CMSCommands:
         Initialize a Count-Min Sketch `key` to characteristics (`error`, `probability`) specified by user.
         For more information see `CMS.INITBYPROB <https://redis.io/commands/cms.initbyprob>`_.
         """  # noqa
-        return self.execute_command(CMS_INITBYPROB, key, error, probability)
+        pass
 
     @overload
     def incrby(self: SyncClientProtocol, key, items, increments) -> list[int]: ...
@@ -924,9 +898,7 @@ class CMSCommands:
 
         >>> cmsincrby('A', ['foo'], [1])
         """  # noqa
-        params = [key]
-        self.append_items_and_increments(params, items, increments)
-        return self.execute_command(CMS_INCRBY, *params)
+        pass
 
     @overload
     def query(self: SyncClientProtocol, key, *items) -> list[int]: ...
@@ -939,7 +911,7 @@ class CMSCommands:
         Return count for an `item` from `key`. Multiple items can be queried with one call.
         For more information see `CMS.QUERY <https://redis.io/commands/cms.query>`_.
         """  # noqa
-        return self.execute_command(CMS_QUERY, key, *items)
+        pass
 
     @overload
     def merge(
@@ -959,10 +931,7 @@ class CMSCommands:
         Both `srcKeys` and `weights` are lists.
         For more information see `CMS.MERGE <https://redis.io/commands/cms.merge>`_.
         """  # noqa
-        params = [destKey, numKeys]
-        params += srcKeys
-        self.append_weights(params, weights)
-        return self.execute_command(CMS_MERGE, *params)
+        pass
 
     @overload
     def info(self: SyncClientProtocol, key) -> CMSInfo: ...

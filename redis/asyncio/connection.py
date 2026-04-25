@@ -306,7 +306,7 @@ class AbstractConnection:
 
     @property
     def is_connected(self):
-        return self._reader is not None and self._writer is not None
+        pass
 
     def register_connect_callback(self, callback):
         """
@@ -362,9 +362,7 @@ class AbstractConnection:
         actual_retry_attempts = 0
 
         def failure_callback(error, failure_count):
-            nonlocal actual_retry_attempts
-            actual_retry_attempts = failure_count
-            return self.disconnect(error=error, failure_count=failure_count)
+            pass
 
         try:
             if retry_socket_connect:
@@ -640,15 +638,11 @@ class AbstractConnection:
 
     async def _send_ping(self):
         """Send PING, expect PONG in return"""
-        await self.send_command("PING", check_health=False)
-        if str_if_bytes(await self.read_response()) != "PONG":
-            raise ConnectionError("Bad response from PING health check")
+        pass
 
     async def _ping_failed(self, error, failure_count):
         """Function to call when PING fails"""
-        await self.disconnect(
-            error=error, failure_count=failure_count, health_check_failed=True
-        )
+        pass
 
     async def check_health(self):
         """Check the health of the connection with a PING/PONG"""
@@ -856,14 +850,13 @@ class AbstractConnection:
 
     def _socket_is_empty(self):
         """Check if the socket is empty"""
-        return len(self._reader._buffer) == 0
+        pass
 
     async def process_invalidation_messages(self):
-        while not self._socket_is_empty():
-            await self.read_response(push_request=True)
+        pass
 
     def set_re_auth_token(self, token: TokenInterface):
-        self._re_auth_token = token
+        pass
 
     async def re_auth(self):
         if self._re_auth_token is not None:
@@ -897,10 +890,7 @@ class Connection(AbstractConnection):
         super().__init__(**kwargs)
 
     def repr_pieces(self):
-        pieces = [("host", self.host), ("port", self.port), ("db", self.db)]
-        if self.client_name:
-            pieces.append(("client_name", self.client_name))
-        return pieces
+        pass
 
     def _connection_arguments(self) -> Mapping:
         return {"host": self.host, "port": self.port}
@@ -981,39 +971,39 @@ class SSLConnection(Connection):
 
     @property
     def keyfile(self):
-        return self.ssl_context.keyfile
+        pass
 
     @property
     def certfile(self):
-        return self.ssl_context.certfile
+        pass
 
     @property
     def cert_reqs(self):
-        return self.ssl_context.cert_reqs
+        pass
 
     @property
     def include_verify_flags(self):
-        return self.ssl_context.include_verify_flags
+        pass
 
     @property
     def exclude_verify_flags(self):
-        return self.ssl_context.exclude_verify_flags
+        pass
 
     @property
     def ca_certs(self):
-        return self.ssl_context.ca_certs
+        pass
 
     @property
     def ca_data(self):
-        return self.ssl_context.ca_data
+        pass
 
     @property
     def check_hostname(self):
-        return self.ssl_context.check_hostname
+        pass
 
     @property
     def min_version(self):
-        return self.ssl_context.min_version
+        pass
 
 
 class RedisSSLContext:
@@ -1117,10 +1107,7 @@ class UnixDomainSocketConnection(AbstractConnection):
         super().__init__(**kwargs)
 
     def repr_pieces(self) -> Iterable[Tuple[str, Union[str, int]]]:
-        pieces = [("path", self.path), ("db", self.db)]
-        if self.client_name:
-            pieces.append(("client_name", self.client_name))
-        return pieces
+        pass
 
     async def _connect(self):
         async with async_timeout(self.socket_connect_timeout):
@@ -1137,25 +1124,13 @@ FALSE_STRINGS = ("0", "F", "FALSE", "N", "NO")
 
 
 def to_bool(value) -> Optional[bool]:
-    if value is None or value == "":
-        return None
-    if isinstance(value, str) and value.upper() in FALSE_STRINGS:
-        return False
-    return bool(value)
+    pass
 
 
 def parse_ssl_verify_flags(value):
     # flags are passed in as a string representation of a list,
     # e.g. VERIFY_X509_STRICT, VERIFY_X509_PARTIAL_CHAIN
-    verify_flags_str = value.replace("[", "").replace("]", "")
-
-    verify_flags = []
-    for flag in verify_flags_str.split(","):
-        flag = flag.strip()
-        if not hasattr(VerifyFlags, flag):
-            raise ValueError(f"Invalid ssl verify flag: {flag}")
-        verify_flags.append(getattr(VerifyFlags, flag))
-    return verify_flags
+    pass
 
 
 URL_QUERY_ARGUMENT_PARSERS: Mapping[str, Callable[..., object]] = MappingProxyType(
@@ -1472,10 +1447,7 @@ class ConnectionPool(ConnectionPoolInterface):
 
     def can_get_connection(self) -> bool:
         """Return True if a connection can be retrieved from the pool."""
-        return (
-            self._available_connections
-            or len(self._in_use_connections) < self.max_connections
-        )
+        pass
 
     @deprecated_args(
         args_to_warn=["*"],
@@ -1639,25 +1611,10 @@ class ConnectionPool(ConnectionPoolInterface):
         await self.disconnect()
 
     def set_retry(self, retry: "Retry") -> None:
-        for conn in self._available_connections:
-            conn.retry = retry
-        for conn in self._in_use_connections:
-            conn.retry = retry
+        pass
 
     async def re_auth_callback(self, token: TokenInterface):
-        async with self._lock:
-            for conn in self._available_connections:
-                await conn.retry.call_with_retry(
-                    lambda: conn.send_command(
-                        "AUTH", token.try_get("oid"), token.get_value()
-                    ),
-                    lambda error: self._mock(error),
-                )
-                await conn.retry.call_with_retry(
-                    lambda: conn.read_response(), lambda error: self._mock(error)
-                )
-            for conn in self._in_use_connections:
-                conn.set_re_auth_token(token)
+        pass
 
     async def _mock(self, error: RedisError):
         """

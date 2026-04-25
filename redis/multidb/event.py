@@ -25,19 +25,19 @@ class ActiveDatabaseChanged:
 
     @property
     def old_database(self) -> SyncDatabase:
-        return self._old_database
+        pass
 
     @property
     def new_database(self) -> SyncDatabase:
-        return self._new_database
+        pass
 
     @property
     def command_executor(self):
-        return self._command_executor
+        pass
 
     @property
     def kwargs(self):
-        return self._kwargs
+        pass
 
 
 class ResubscribeOnActiveDatabaseChanged(EventListenerInterface):

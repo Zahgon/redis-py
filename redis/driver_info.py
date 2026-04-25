@@ -12,13 +12,7 @@ def _validate_no_invalid_chars(value: str, field_name: str) -> None:
     This mirrors the constraints enforced by other Redis clients for values that
     will appear in CLIENT LIST / CLIENT INFO output.
     """
-
-    for ch in value:
-        # printable ASCII without space: '!' (0x21) to '~' (0x7E)
-        if ord(ch) < 0x21 or ord(ch) > 0x7E or ch in _BRACES:
-            raise ValueError(
-                f"{field_name} must not contain spaces, newlines, non-printable characters, or braces"
-            )
+    pass
 
 
 def _validate_driver_name(name: str) -> None:
@@ -32,24 +26,15 @@ def _validate_driver_name(name: str) -> None:
 
     Examples of valid names: ``"django-redis"``, ``"celery"``, ``"rq"``.
     """
-
-    import re
-
-    _validate_no_invalid_chars(name, "Driver name")
-    if not re.match(r"^[a-z][a-z0-9_-]*$", name):
-        raise ValueError(
-            "Upstream driver name must use a Python package-style name: "
-            "start with a lowercase letter and contain only lowercase letters, "
-            "digits, hyphens, and underscores (e.g., 'django-redis')."
-        )
+    pass
 
 
 def _validate_driver_version(version: str) -> None:
-    _validate_no_invalid_chars(version, "Driver version")
+    pass
 
 
 def _format_driver_entry(driver_name: str, driver_version: str) -> str:
-    return f"{driver_name}_v{driver_version}"
+    pass
 
 
 @dataclass
@@ -103,8 +88,7 @@ class DriverInfo:
 
         Each entry is in the form ``"driver-name_vversion"``.
         """
-
-        return list(self._upstream)
+        pass
 
     def add_upstream_driver(
         self, driver_name: str, driver_version: str
@@ -113,19 +97,7 @@ class DriverInfo:
 
         The most recently added driver appears first in :pyattr:`formatted_name`.
         """
-
-        if driver_name is None:
-            raise ValueError("Driver name must not be None")
-        if driver_version is None:
-            raise ValueError("Driver version must not be None")
-
-        _validate_driver_name(driver_name)
-        _validate_driver_version(driver_version)
-
-        entry = _format_driver_entry(driver_name, driver_version)
-        # insert at the beginning so latest is first
-        self._upstream.insert(0, entry)
-        return self
+        pass
 
     @property
     def formatted_name(self) -> str:
@@ -135,10 +107,7 @@ class DriverInfo:
 
             name(driver1_vX;driver2_vY)
         """
-
-        if not self._upstream:
-            return self.name
-        return f"{self.name}({';'.join(self._upstream)})"
+        pass
 
 
 def resolve_driver_info(
@@ -165,12 +134,4 @@ def resolve_driver_info(
     DriverInfo
         The resolved DriverInfo instance
     """
-    if driver_info is not None:
-        return driver_info
-
-    # Fallback: create DriverInfo from lib_name and lib_version
-    from redis.utils import get_lib_version
-
-    name = lib_name if lib_name is not None else "redis-py"
-    version = lib_version if lib_version is not None else get_lib_version()
-    return DriverInfo(name=name, lib_version=version)
+    pass

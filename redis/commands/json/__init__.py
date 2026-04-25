@@ -79,21 +79,7 @@ class _JSONBase(JSONCommands):
 
     def _decode(self, obj):
         """Get the decoder."""
-        if obj is None:
-            return obj
-
-        try:
-            x = self.__decoder__.decode(obj)
-            if x is None:
-                raise TypeError
-            return x
-        except TypeError:
-            try:
-                return self.__decoder__.decode(obj.decode())
-            except AttributeError:
-                return decode_list(obj)
-        except (AttributeError, JSONDecodeError):
-            return decode_list(obj)
+        pass
 
     @staticmethod
     def _convert_resp_floats(obj):
@@ -105,15 +91,7 @@ class _JSONBase(JSONCommands):
         Structure markers ("{", "[") and boolean strings ("true", "false")
         are not valid float literals and are therefore safely skipped.
         """
-        if isinstance(obj, list):
-            return [_JSONBase._convert_resp_floats(item) for item in obj]
-        if isinstance(obj, (str, bytes)):
-            s = obj.decode() if isinstance(obj, bytes) else obj
-            try:
-                return float(s)
-            except (ValueError, OverflowError):
-                return obj
-        return obj
+        pass
 
     def _decode_resp_command(self, obj):
         """Decode JSON.RESP response for RESP2.
@@ -121,8 +99,7 @@ class _JSONBase(JSONCommands):
         First applies the standard _decode logic, then recursively converts
         string-encoded floats to native floats to match RESP3 output.
         """
-        decoded = self._decode(obj)
-        return self._convert_resp_floats(decoded)
+        pass
 
     def _decode_json_numop(self, obj):
         """Decode JSON numeric operation result and normalize to array format.
@@ -132,21 +109,11 @@ class _JSONBase(JSONCommands):
         RESP3 always returns an array. Normalize RESP2 to match RESP3 format
         by wrapping scalar results in a list.
         """
-        if obj is None:
-            return obj
-        try:
-            result = self.__decoder__.decode(
-                obj if isinstance(obj, str) else obj.decode()
-            )
-        except (AttributeError, JSONDecodeError):
-            return obj
-        if not isinstance(result, list):
-            result = [result]
-        return result
+        pass
 
     def _encode(self, obj):
         """Get the encoder."""
-        return self.__encoder__.encode(obj)
+        pass
 
     def pipeline(self, transaction=True, shard_hint=None):
         """Creates a pipeline for the JSON module, that can be used for executing
@@ -218,21 +185,7 @@ class AsyncJSON(_JSONBase):
         This runs the blocking file read in a thread pool to avoid blocking
         the event loop.
         """
-
-        def _read_file(fp: str) -> dict:
-            with open(fp) as f:
-                return loads(f.read())
-
-        file_content = await asyncio.to_thread(_read_file, file_name)
-        return await self.set(
-            name,
-            path,
-            file_content,
-            nx=nx,
-            xx=xx,
-            decode_keys=decode_keys,
-            fpha=fpha,
-        )
+        pass
 
     async def set_path(
         self,
@@ -250,37 +203,4 @@ class AsyncJSON(_JSONBase):
         This method runs blocking filesystem operations (os.walk and file reads)
         in a thread pool to avoid blocking the event loop.
         """
-
-        def _walk_directory(folder: str) -> list[str]:
-            """Walk directory and return list of file paths (runs in thread pool)."""
-            file_paths = []
-            for root, dirs, files in os.walk(folder):
-                for file in files:
-                    file_paths.append(os.path.join(root, file))
-            return file_paths
-
-        set_files_result = {}
-
-        # Run blocking os.walk in thread pool
-        file_paths = await asyncio.to_thread(_walk_directory, root_folder)
-
-        for file_path in file_paths:
-            try:
-                # TODO: rsplit(".") splits on all dots, mishandling paths
-                # with dots in directories (e.g. /data/v1.2/file.json).
-                # Should be rsplit(".", 1) — fix in a separate PR.
-                file_name = file_path.rsplit(".")[0]
-                await self.set_file(
-                    file_name,
-                    json_path,
-                    file_path,
-                    nx=nx,
-                    xx=xx,
-                    decode_keys=decode_keys,
-                    fpha=fpha,
-                )
-                set_files_result[file_path] = True
-            except JSONDecodeError:
-                set_files_result[file_path] = False
-
-        return set_files_result
+        pass

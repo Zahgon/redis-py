@@ -178,18 +178,7 @@ class AsyncHTTPClientWrapper(AsyncHTTPClient):
         timeout: Optional[float] = None,
         expect_json: bool = True,
     ) -> Union[HttpResponse, Any]:
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            self._executor,
-            self.client.post,
-            path,
-            json_body,
-            data,
-            params,
-            headers,
-            timeout,
-            expect_json,
-        )
+        pass
 
     async def put(
         self,
@@ -203,18 +192,7 @@ class AsyncHTTPClientWrapper(AsyncHTTPClient):
         timeout: Optional[float] = None,
         expect_json: bool = True,
     ) -> Union[HttpResponse, Any]:
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            self._executor,
-            self.client.put,
-            path,
-            json_body,
-            data,
-            params,
-            headers,
-            timeout,
-            expect_json,
-        )
+        pass
 
     async def patch(
         self,

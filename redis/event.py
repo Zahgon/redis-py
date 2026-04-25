@@ -130,17 +130,7 @@ class EventDispatcher(EventDispatcherInterface):
             List[Union[EventListenerInterface, AsyncEventListenerInterface]],
         ],
     ):
-        with self._lock:
-            for event_type in mappings:
-                if event_type in self._event_listeners_mapping:
-                    self._event_listeners_mapping[event_type] = list(
-                        set(
-                            self._event_listeners_mapping[event_type]
-                            + mappings[event_type]
-                        )
-                    )
-                else:
-                    self._event_listeners_mapping[event_type] = mappings[event_type]
+        pass
 
 
 class AfterConnectionReleasedEvent:
@@ -153,7 +143,7 @@ class AfterConnectionReleasedEvent:
 
     @property
     def connection(self):
-        return self._connection
+        pass
 
 
 class AsyncAfterConnectionReleasedEvent(AfterConnectionReleasedEvent):
@@ -182,15 +172,15 @@ class AfterPooledConnectionsInstantiationEvent:
 
     @property
     def connection_pools(self):
-        return self._connection_pools
+        pass
 
     @property
     def client_type(self) -> ClientType:
-        return self._client_type
+        pass
 
     @property
     def credential_provider(self) -> Union[CredentialProvider, None]:
-        return self._credential_provider
+        pass
 
 
 class AfterSingleConnectionInstantiationEvent:
@@ -213,15 +203,15 @@ class AfterSingleConnectionInstantiationEvent:
 
     @property
     def connection(self):
-        return self._connection
+        pass
 
     @property
     def client_type(self) -> ClientType:
-        return self._client_type
+        pass
 
     @property
     def connection_lock(self) -> Union[threading.RLock, asyncio.Lock]:
-        return self._connection_lock
+        pass
 
 
 class AfterPubSubConnectionInstantiationEvent:
@@ -239,19 +229,19 @@ class AfterPubSubConnectionInstantiationEvent:
 
     @property
     def pubsub_connection(self):
-        return self._pubsub_connection
+        pass
 
     @property
     def connection_pool(self):
-        return self._connection_pool
+        pass
 
     @property
     def client_type(self) -> ClientType:
-        return self._client_type
+        pass
 
     @property
     def connection_lock(self) -> Union[threading.RLock, asyncio.Lock]:
-        return self._connection_lock
+        pass
 
 
 class AfterAsyncClusterInstantiationEvent:
@@ -272,11 +262,11 @@ class AfterAsyncClusterInstantiationEvent:
 
     @property
     def nodes(self) -> dict:
-        return self._nodes
+        pass
 
     @property
     def credential_provider(self) -> Union[CredentialProvider, None]:
-        return self._credential_provider
+        pass
 
 
 class OnCommandsFailEvent:
@@ -294,7 +284,7 @@ class OnCommandsFailEvent:
 
     @property
     def commands(self) -> tuple:
-        return self._commands
+        pass
 
     @property
     def exception(self) -> Exception:
@@ -344,12 +334,10 @@ class RegisterReAuthForPooledConnections(EventListenerInterface):
                 event.credential_provider.on_error(self._raise_on_error_async)
 
     def _re_auth(self, token):
-        for pool in self._event.connection_pools:
-            pool.re_auth_callback(token)
+        pass
 
     async def _re_auth_async(self, token):
-        for pool in self._event.connection_pools:
-            await pool.re_auth_callback(token)
+        pass
 
     def _raise_on_error(self, error: Exception):
         raise EventException(error, self._event)
@@ -383,18 +371,10 @@ class RegisterReAuthForSingleConnection(EventListenerInterface):
                 )
 
     def _re_auth(self, token):
-        with self._event.connection_lock:
-            self._event.connection.send_command(
-                "AUTH", token.try_get("oid"), token.get_value()
-            )
-            self._event.connection.read_response()
+        pass
 
     async def _re_auth_async(self, token):
-        async with self._event.connection_lock:
-            await self._event.connection.send_command(
-                "AUTH", token.try_get("oid"), token.get_value()
-            )
-            await self._event.connection.read_response()
+        pass
 
     def _raise_on_error(self, error: Exception):
         raise EventException(error, self._event)
@@ -414,8 +394,7 @@ class RegisterReAuthForAsyncClusterNodes(EventListenerInterface):
             event.credential_provider.on_error(self._raise_on_error)
 
     async def _re_auth(self, token: TokenInterface):
-        for key in self._event.nodes:
-            await self._event.nodes[key].re_auth_callback(token)
+        pass
 
     async def _raise_on_error(self, error: Exception):
         raise EventException(error, self._event)
@@ -449,22 +428,10 @@ class RegisterReAuthForPubSub(EventListenerInterface):
                 )
 
     def _re_auth(self, token: TokenInterface):
-        with self._connection_lock:
-            self._connection.send_command(
-                "AUTH", token.try_get("oid"), token.get_value()
-            )
-            self._connection.read_response()
-
-        self._connection_pool.re_auth_callback(token)
+        pass
 
     async def _re_auth_async(self, token: TokenInterface):
-        async with self._connection_lock:
-            await self._connection.send_command(
-                "AUTH", token.try_get("oid"), token.get_value()
-            )
-            await self._connection.read_response()
-
-        await self._connection_pool.re_auth_callback(token)
+        pass
 
     def _raise_on_error(self, error: Exception):
         raise EventException(error, self._event)

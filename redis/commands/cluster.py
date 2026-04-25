@@ -188,13 +188,7 @@ class ClusterMultiKeyCommands(ClusterCommandsProtocol):
         self, mapping: Mapping[AnyKeyT, EncodableT]
     ) -> Dict[int, List[EncodableT]]:
         """Split pairs into a dictionary that maps a slot to a list of pairs."""
-
-        slots_to_pairs = {}
-        for pair in mapping.items():
-            slot = key_slot(self.encoder.encode(pair[0]))
-            slots_to_pairs.setdefault(slot, []).extend(pair)
-
-        return slots_to_pairs
+        pass
 
     def _execute_pipeline_by_slot(
         self, command: str, slots_to_args: Mapping[int, Iterable[EncodableT]]
@@ -219,12 +213,7 @@ class ClusterMultiKeyCommands(ClusterCommandsProtocol):
         slots_to_args: Mapping[int, Iterable[EncodableT]],
         responses: Iterable[Any],
     ) -> List[Any]:
-        results = {
-            k: v
-            for slot_values, response in zip(slots_to_args.values(), responses)
-            for k, v in zip(slot_values, response)
-        }
-        return [results[key] for key in keys]
+        pass
 
     def mget_nonatomic(self, keys: KeysT, *args: KeyT) -> List[Any | None]:
         """
@@ -236,18 +225,7 @@ class ClusterMultiKeyCommands(ClusterCommandsProtocol):
 
         For more information see https://redis.io/commands/mget
         """
-
-        # Concatenate all keys into a list
-        keys = list_or_args(keys, args)
-
-        # Split keys into slots
-        slots_to_keys = self._partition_keys_by_slot(keys)
-
-        # Execute commands using a pipeline
-        res = self._execute_pipeline_by_slot("MGET", slots_to_keys)
-
-        # Reorder keys in the order the user provided & return
-        return self._reorder_keys_by_command(keys, slots_to_keys, res)
+        pass
 
     def mset_nonatomic(self, mapping: Mapping[AnyKeyT, EncodableT]) -> List[bool]:
         """
@@ -261,12 +239,7 @@ class ClusterMultiKeyCommands(ClusterCommandsProtocol):
 
         For more information see https://redis.io/commands/mset
         """
-
-        # Partition the keys by slot
-        slots_to_pairs = self._partition_pairs_by_slot(mapping)
-
-        # Execute commands using a pipeline & return list of replies
-        return self._execute_pipeline_by_slot("MSET", slots_to_pairs)
+        pass
 
     def _split_command_across_slots(self, command: str, *keys: KeyT) -> int:
         """
@@ -354,7 +327,7 @@ class ClusterMultiKeyCommands(ClusterCommandsProtocol):
 
         For more information see https://redis.io/commands/unlink
         """
-        return self._split_command_across_slots("UNLINK", *keys)
+        pass
 
 
 class AsyncClusterMultiKeyCommands(ClusterMultiKeyCommands):
@@ -372,18 +345,7 @@ class AsyncClusterMultiKeyCommands(ClusterMultiKeyCommands):
 
         For more information see https://redis.io/commands/mget
         """
-
-        # Concatenate all keys into a list
-        keys = list_or_args(keys, args)
-
-        # Split keys into slots
-        slots_to_keys = self._partition_keys_by_slot(keys)
-
-        # Execute commands using a pipeline
-        res = await self._execute_pipeline_by_slot("MGET", slots_to_keys)
-
-        # Reorder keys in the order the user provided & return
-        return self._reorder_keys_by_command(keys, slots_to_keys, res)
+        pass
 
     async def mset_nonatomic(self, mapping: Mapping[AnyKeyT, EncodableT]) -> List[bool]:
         """
@@ -397,12 +359,7 @@ class AsyncClusterMultiKeyCommands(ClusterMultiKeyCommands):
 
         For more information see https://redis.io/commands/mset
         """
-
-        # Partition the keys by slot
-        slots_to_pairs = self._partition_pairs_by_slot(mapping)
-
-        # Execute commands using a pipeline & return list of replies
-        return await self._execute_pipeline_by_slot("MSET", slots_to_pairs)
+        pass
 
     async def _split_command_across_slots(self, command: str, *keys: KeyT) -> int:
         """
@@ -489,7 +446,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information check https://redis.io/commands/cluster-myid/
         """
-        return self.execute_command("CLUSTER MYID", target_nodes=target_node)
+        pass
 
     @overload
     def cluster_addslots(
@@ -512,9 +469,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-addslots
         """
-        return self.execute_command(
-            "CLUSTER ADDSLOTS", *slots, target_nodes=target_node
-        )
+        pass
 
     @overload
     def cluster_addslotsrange(
@@ -540,9 +495,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-addslotsrange
         """
-        return self.execute_command(
-            "CLUSTER ADDSLOTSRANGE", *slots, target_nodes=target_node
-        )
+        pass
 
     @overload
     def cluster_countkeysinslot(self: SyncClientProtocol, slot_id: int) -> int: ...
@@ -559,7 +512,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-countkeysinslot
         """
-        return self.execute_command("CLUSTER COUNTKEYSINSLOT", slot_id)
+        pass
 
     @overload
     def cluster_count_failure_report(self: SyncClientProtocol, node_id: str) -> int: ...
@@ -576,7 +529,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-count-failure-reports
         """
-        return self.execute_command("CLUSTER COUNT-FAILURE-REPORTS", node_id)
+        pass
 
     def cluster_delslots(self, *slots: EncodableT) -> List[bool]:
         """
@@ -587,7 +540,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-delslots
         """
-        return [self.execute_command("CLUSTER DELSLOTS", slot) for slot in slots]
+        pass
 
     @overload
     def cluster_delslotsrange(self: SyncClientProtocol, *slots: EncodableT) -> bool: ...
@@ -606,7 +559,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-delslotsrange
         """
-        return self.execute_command("CLUSTER DELSLOTSRANGE", *slots)
+        pass
 
     @overload
     def cluster_failover(
@@ -634,17 +587,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-failover
         """
-        if option:
-            if option.upper() not in ["FORCE", "TAKEOVER"]:
-                raise RedisError(
-                    f"Invalid option for CLUSTER FAILOVER command: {option}"
-                )
-            else:
-                return self.execute_command(
-                    "CLUSTER FAILOVER", option, target_nodes=target_node
-                )
-        else:
-            return self.execute_command("CLUSTER FAILOVER", target_nodes=target_node)
+        pass
 
     @overload
     def cluster_info(
@@ -666,7 +609,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-info
         """
-        return self.execute_command("CLUSTER INFO", target_nodes=target_nodes)
+        pass
 
     @overload
     def cluster_keyslot(self: SyncClientProtocol, key: str) -> int: ...
@@ -681,7 +624,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-keyslot
         """
-        return self.execute_command("CLUSTER KEYSLOT", key)
+        pass
 
     @overload
     def cluster_meet(
@@ -708,9 +651,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-meet
         """
-        return self.execute_command(
-            "CLUSTER MEET", host, port, target_nodes=target_nodes
-        )
+        pass
 
     @overload
     def cluster_nodes(self: SyncClientProtocol) -> dict[str, ClusterNodeDetail]: ...
@@ -729,7 +670,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-nodes
         """
-        return self.execute_command("CLUSTER NODES")
+        pass
 
     @overload
     def cluster_replicate(
@@ -749,9 +690,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-replicate
         """
-        return self.execute_command(
-            "CLUSTER REPLICATE", node_id, target_nodes=target_nodes
-        )
+        pass
 
     @overload
     def cluster_reset(
@@ -778,9 +717,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-reset
         """
-        return self.execute_command(
-            "CLUSTER RESET", b"SOFT" if soft else b"HARD", target_nodes=target_nodes
-        )
+        pass
 
     @overload
     def cluster_save_config(
@@ -800,7 +737,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-saveconfig
         """
-        return self.execute_command("CLUSTER SAVECONFIG", target_nodes=target_nodes)
+        pass
 
     @overload
     def cluster_get_keys_in_slot(
@@ -820,7 +757,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-getkeysinslot
         """
-        return self.execute_command("CLUSTER GETKEYSINSLOT", slot, num_keys)
+        pass
 
     @overload
     def cluster_set_config_epoch(
@@ -842,9 +779,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-set-config-epoch
         """
-        return self.execute_command(
-            "CLUSTER SET-CONFIG-EPOCH", epoch, target_nodes=target_nodes
-        )
+        pass
 
     @overload
     def cluster_setslot(
@@ -875,14 +810,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-setslot
         """
-        if state.upper() in ("IMPORTING", "NODE", "MIGRATING"):
-            return self.execute_command(
-                "CLUSTER SETSLOT", slot_id, state, node_id, target_nodes=target_node
-            )
-        elif state.upper() == "STABLE":
-            raise RedisError('For "stable" state please use cluster_setslot_stable')
-        else:
-            raise RedisError(f"Invalid slot state: {state}")
+        pass
 
     @overload
     def cluster_setslot_stable(self: SyncClientProtocol, slot_id: int) -> bool: ...
@@ -899,7 +827,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-setslot
         """
-        return self.execute_command("CLUSTER SETSLOT", slot_id, "STABLE")
+        pass
 
     @overload
     def cluster_replicas(
@@ -924,9 +852,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-replicas
         """
-        return self.execute_command(
-            "CLUSTER REPLICAS", node_id, target_nodes=target_nodes
-        )
+        pass
 
     @overload
     def cluster_slots(
@@ -946,7 +872,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-slots
         """
-        return self.execute_command("CLUSTER SLOTS", target_nodes=target_nodes)
+        pass
 
     @overload
     def cluster_shards(
@@ -966,7 +892,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-shards
         """
-        return self.execute_command("CLUSTER SHARDS", target_nodes=target_nodes)
+        pass
 
     @overload
     def cluster_myshardid(
@@ -986,7 +912,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-myshardid/
         """
-        return self.execute_command("CLUSTER MYSHARDID", target_nodes=target_nodes)
+        pass
 
     @overload
     def cluster_links(
@@ -1010,7 +936,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/cluster-links
         """
-        return self.execute_command("CLUSTER LINKS", target_nodes=target_node)
+        pass
 
     def cluster_flushslots(self, target_nodes: "TargetNodesT" | None = None) -> None:
         raise NotImplementedError(
@@ -1030,11 +956,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/readonly
         """
-        if target_nodes == "replicas" or target_nodes == "all":
-            # read_from_replicas will only be enabled if the READONLY command
-            # is sent to all replicas
-            self.read_from_replicas = True
-        return self.execute_command("READONLY", target_nodes=target_nodes)
+        pass
 
     def readwrite(self, target_nodes: "TargetNodesT" | None = None) -> ResponseT:
         """
@@ -1044,9 +966,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/readwrite
         """
-        # Reset read from replicas flag
-        self.read_from_replicas = False
-        return self.execute_command("READWRITE", target_nodes=target_nodes)
+        pass
 
     @deprecated_function(
         version="7.2.0",
@@ -1072,16 +992,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/client-tracking
         """
-        return self.client_tracking(
-            True,
-            clientid,
-            prefix,
-            bcast,
-            optin,
-            optout,
-            noloop,
-            target_nodes=target_nodes,
-        )
+        pass
 
     @deprecated_function(
         version="7.2.0",
@@ -1107,16 +1018,7 @@ class ClusterManagementCommands(ManagementCommands):
 
         For more information see https://redis.io/commands/client-tracking
         """
-        return self.client_tracking(
-            False,
-            clientid,
-            prefix,
-            bcast,
-            optin,
-            optout,
-            noloop,
-            target_nodes=target_nodes,
-        )
+        pass
 
     def hotkeys_start(
         self,
@@ -1186,12 +1088,7 @@ class AsyncClusterManagementCommands(
 
         For more information see https://redis.io/commands/cluster-delslots
         """
-        return await asyncio.gather(
-            *(
-                asyncio.create_task(self.execute_command("CLUSTER DELSLOTS", slot))
-                for slot in slots
-            )
-        )
+        pass
 
     @deprecated_function(
         version="7.2.0",
@@ -1217,16 +1114,7 @@ class AsyncClusterManagementCommands(
 
         For more information see https://redis.io/commands/client-tracking
         """
-        return await self.client_tracking(
-            True,
-            clientid,
-            prefix,
-            bcast,
-            optin,
-            optout,
-            noloop,
-            target_nodes=target_nodes,
-        )
+        pass
 
     @deprecated_function(
         version="7.2.0",
@@ -1252,16 +1140,7 @@ class AsyncClusterManagementCommands(
 
         For more information see https://redis.io/commands/client-tracking
         """
-        return await self.client_tracking(
-            False,
-            clientid,
-            prefix,
-            bcast,
-            optin,
-            optout,
-            noloop,
-            target_nodes=target_nodes,
-        )
+        pass
 
     async def hotkeys_start(
         self,
@@ -1379,21 +1258,7 @@ class ClusterDataAccessCommands(DataAccessCommands):
 
         For more information see https://redis.io/commands/stralgo
         """
-        target_nodes = kwargs.pop("target_nodes", None)
-        if specific_argument == "strings" and target_nodes is None:
-            target_nodes = "default-node"
-        kwargs.update({"target_nodes": target_nodes})
-        return super().stralgo(
-            algo,
-            value1,
-            value2,
-            specific_argument,
-            len,
-            idx,
-            minmatchlen,
-            withmatchlen,
-            **kwargs,
-        )
+        pass
 
     def scan_iter(
         self,
@@ -1403,32 +1268,7 @@ class ClusterDataAccessCommands(DataAccessCommands):
         **kwargs,
     ) -> Iterator:
         # Do the first query with cursor=0 for all nodes
-        cursors, data = self.scan(match=match, count=count, _type=_type, **kwargs)
-        yield from data
-
-        cursors = {name: cursor for name, cursor in cursors.items() if cursor != 0}
-        if cursors:
-            # Get nodes by name
-            nodes = {name: self.get_node(node_name=name) for name in cursors.keys()}
-
-            # Iterate over each node till its cursor is 0
-            kwargs.pop("target_nodes", None)
-            while cursors:
-                for name, cursor in cursors.items():
-                    cur, data = self.scan(
-                        cursor=cursor,
-                        match=match,
-                        count=count,
-                        _type=_type,
-                        target_nodes=nodes[name],
-                        **kwargs,
-                    )
-                    yield from data
-                    cursors[name] = cur[name]
-
-                cursors = {
-                    name: cursor for name, cursor in cursors.items() if cursor != 0
-                }
+        pass
 
 
 class AsyncClusterDataAccessCommands(
@@ -1449,34 +1289,7 @@ class AsyncClusterDataAccessCommands(
         **kwargs,
     ) -> AsyncIterator:
         # Do the first query with cursor=0 for all nodes
-        cursors, data = await self.scan(match=match, count=count, _type=_type, **kwargs)
-        for value in data:
-            yield value
-
-        cursors = {name: cursor for name, cursor in cursors.items() if cursor != 0}
-        if cursors:
-            # Get nodes by name
-            nodes = {name: self.get_node(node_name=name) for name in cursors.keys()}
-
-            # Iterate over each node till its cursor is 0
-            kwargs.pop("target_nodes", None)
-            while cursors:
-                for name, cursor in cursors.items():
-                    cur, data = await self.scan(
-                        cursor=cursor,
-                        match=match,
-                        count=count,
-                        _type=_type,
-                        target_nodes=nodes[name],
-                        **kwargs,
-                    )
-                    for value in data:
-                        yield value
-                    cursors[name] = cur[name]
-
-                cursors = {
-                    name: cursor for name, cursor in cursors.items() if cursor != 0
-                }
+        pass
 
 
 class RedisClusterCommands(

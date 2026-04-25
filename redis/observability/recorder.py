@@ -205,14 +205,7 @@ def init_connection_count() -> None:
         return
 
     def observable_callback(__):
-        observables_registry = get_observables_registry_instance()
-        callbacks = observables_registry.get(CONNECTION_COUNT_REGISTRY_KEY)
-        observations = []
-
-        for callback in callbacks:
-            observations.extend(callback())
-
-        return observations
+        pass
 
     try:
         collector.init_connection_count(
@@ -242,11 +235,7 @@ def register_pools_connection_count(
         from opentelemetry.metrics import Observation
 
         def connection_count_callback():
-            observations = []
-            for connection_pool in connection_pools:
-                for count, attributes in connection_pool.get_connection_count():
-                    observations.append(Observation(count, attributes=attributes))
-            return observations
+            pass
 
         observables_registry = get_observables_registry_instance()
         observables_registry.register(
@@ -268,19 +257,7 @@ def record_connection_timeout(
     Example:
         >>> record_connection_timeout('ConnectionPool<localhost:6379>')
     """
-    global _metrics_collector
-
-    if _metrics_collector is None:
-        _metrics_collector = _get_or_create_collector()
-        if _metrics_collector is None:
-            return
-
-    try:
-        _metrics_collector.record_connection_timeout(
-            pool_name=pool_name,
-        )
-    except Exception:
-        pass
+    pass
 
 
 def record_connection_wait_time(
@@ -361,21 +338,7 @@ def record_connection_relaxed_timeout(
     Example:
         >>> record_connection_relaxed_timeout('localhost:6379_a1b2c3d4', 'MOVING', True)
     """
-    global _metrics_collector
-
-    if _metrics_collector is None:
-        _metrics_collector = _get_or_create_collector()
-        if _metrics_collector is None:
-            return
-
-    try:
-        _metrics_collector.record_connection_relaxed_timeout(
-            connection_name=connection_name,
-            maint_notification=maint_notification,
-            relaxed=relaxed,
-        )
-    except Exception:
-        pass
+    pass
 
 
 def record_connection_handoff(
@@ -390,19 +353,7 @@ def record_connection_handoff(
     Example:
         >>> record_connection_handoff('ConnectionPool<localhost:6379>')
     """
-    global _metrics_collector
-
-    if _metrics_collector is None:
-        _metrics_collector = _get_or_create_collector()
-        if _metrics_collector is None:
-            return
-
-    try:
-        _metrics_collector.record_connection_handoff(
-            pool_name=pool_name,
-        )
-    except Exception:
-        pass
+    pass
 
 
 def record_error_count(
@@ -633,23 +584,7 @@ def record_maint_notification_count(
     Example:
         >>> record_maint_notification_count('localhost', 6379, 'localhost', 6379, 'MOVING')
     """
-    global _metrics_collector
-
-    if _metrics_collector is None:
-        _metrics_collector = _get_or_create_collector()
-        if _metrics_collector is None:
-            return
-
-    try:
-        _metrics_collector.record_maint_notification_count(
-            server_address=server_address,
-            server_port=server_port,
-            network_peer_address=network_peer_address,
-            network_peer_port=network_peer_port,
-            maint_notification=maint_notification,
-        )
-    except Exception:
-        pass
+    pass
 
 
 def record_csc_request(
@@ -680,29 +615,7 @@ def init_csc_items() -> None:
     """
     Initialize observable gauge for CSC items metric.
     """
-    global _metrics_collector
-
-    if _metrics_collector is None:
-        _metrics_collector = _get_or_create_collector()
-        if _metrics_collector is None:
-            return
-
-    def observable_callback(__):
-        observables_registry = get_observables_registry_instance()
-        callbacks = observables_registry.get(CSC_ITEMS_REGISTRY_KEY)
-        observations = []
-
-        for callback in callbacks:
-            observations.extend(callback())
-
-        return observations
-
-    try:
-        _metrics_collector.init_csc_items(
-            callback=observable_callback,
-        )
-    except Exception:
-        pass
+    pass
 
 
 def register_csc_items_callback(
@@ -716,29 +629,7 @@ def register_csc_items_callback(
         callback: Callback function that returns the cache size
         pool_name: Connection pool name for observability
     """
-    global _metrics_collector
-
-    if _metrics_collector is None:
-        _metrics_collector = _get_or_create_collector()
-        if _metrics_collector is None:
-            return
-
-    # Lazy import
-    from opentelemetry.metrics import Observation
-
-    def csc_items_callback():
-        return [
-            Observation(
-                callback(),
-                attributes=AttributeBuilder.build_csc_attributes(pool_name=pool_name),
-            )
-        ]
-
-    try:
-        observables_registry = get_observables_registry_instance()
-        observables_registry.register(CSC_ITEMS_REGISTRY_KEY, csc_items_callback)
-    except Exception:
-        pass
+    pass
 
 
 def record_csc_eviction(
@@ -752,20 +643,7 @@ def record_csc_eviction(
         count: Number of evictions
         reason: Reason for eviction
     """
-    global _metrics_collector
-
-    if _metrics_collector is None:
-        _metrics_collector = _get_or_create_collector()
-        if _metrics_collector is None:
-            return
-
-    try:
-        _metrics_collector.record_csc_eviction(
-            count=count,
-            reason=reason,
-        )
-    except Exception:
-        pass
+    pass
 
 
 def record_csc_network_saved(
@@ -869,8 +747,7 @@ def reset_collector() -> None:
     """
     Reset the global collector (used for testing or re-initialization).
     """
-    global _metrics_collector
-    _metrics_collector = None
+    pass
 
 
 def is_enabled() -> bool:

@@ -46,19 +46,16 @@ class Query:
 
     def query_string(self) -> str:
         """Return the query string of this query only."""
-        return self._query_string
+        pass
 
     def limit_ids(self, *ids) -> "Query":
         """Limit the results to a specific set of pre-known document
         ids of any length."""
-        self._ids = ids
-        return self
+        pass
 
     def return_fields(self, *fields) -> "Query":
         """Add fields to return fields."""
-        for field in fields:
-            self.return_field(field)
-        return self
+        pass
 
     def return_field(
         self,
@@ -75,16 +72,10 @@ class Query:
         - **decode_field**: Whether to decode the field from bytes to string
         - **encoding**: The encoding to use when decoding the field
         """
-        self._return_fields.append(field)
-        self._return_fields_decode_as[field] = encoding if decode_field else None
-        if as_field is not None:
-            self._return_fields += ("AS", as_field)
-        return self
+        pass
 
     def _mk_field_list(self, fields: Optional[Union[List[str], str]]) -> List:
-        if not fields:
-            return []
-        return [fields] if isinstance(fields, str) else list(fields)
+        pass
 
     def summarize(
         self,
@@ -109,20 +100,7 @@ class Query:
         - **num_frags** Number of fragments per document
         - **sep** Separator string to separate fragments
         """
-        args = ["SUMMARIZE"]
-        fields = self._mk_field_list(fields)
-        if fields:
-            args += ["FIELDS", str(len(fields))] + fields
-
-        if context_len is not None:
-            args += ["LEN", str(context_len)]
-        if num_frags is not None:
-            args += ["FRAGS", str(num_frags)]
-        if sep is not None:
-            args += ["SEPARATOR", sep]
-
-        self._summarize_fields = args
-        return self
+        pass
 
     def highlight(
         self, fields: Optional[List[str]] = None, tags: Optional[List[str]] = None
@@ -134,15 +112,7 @@ class Query:
         highlighted, otherwise all fields are highlighted
         - **tags** A list of two strings to surround the match.
         """
-        args = ["HIGHLIGHT"]
-        fields = self._mk_field_list(fields)
-        if fields:
-            args += ["FIELDS", str(len(fields))] + fields
-        if tags:
-            args += ["TAGS"] + list(tags)
-
-        self._highlight_fields = args
-        return self
+        pass
 
     def language(self, language: str) -> "Query":
         """
@@ -150,15 +120,13 @@ class Query:
 
         :param language: The language (e.g. `chinese` or `english`)
         """
-        self._language = language
-        return self
+        pass
 
     def slop(self, slop: int) -> "Query":
         """Allow a maximum of N intervening non-matched terms between
         phrase terms (0 means exact phrase).
         """
-        self._slop = slop
-        return self
+        pass
 
     def timeout(self, timeout: float) -> "Query":
         """overrides the timeout parameter of the module"""
@@ -171,8 +139,7 @@ class Query:
         the same order in the document.
         i.e., for the query "hello world", we do not match "world hello"
         """
-        self._in_order = True
-        return self
+        pass
 
     def scorer(self, scorer: str) -> "Query":
         """
@@ -184,8 +151,7 @@ class Query:
         :param scorer: The scoring function to use
                        (e.g. `TFIDF.DOCNORM` or `BM25`)
         """
-        self._scorer = scorer
-        return self
+        pass
 
     def get_args(self) -> List[Union[str, int, float]]:
         """Format the redis arguments for this query and return them."""
@@ -196,55 +162,7 @@ class Query:
         return args
 
     def _get_args_tags(self) -> List[Union[str, int, float]]:
-        args: List[Union[str, int, float]] = []
-        if self._no_content:
-            args.append("NOCONTENT")
-        if self._fields:
-            args.append("INFIELDS")
-            args.append(len(self._fields))
-            args += self._fields
-        if self._verbatim:
-            args.append("VERBATIM")
-        if self._no_stopwords:
-            args.append("NOSTOPWORDS")
-        if self._filters:
-            for flt in self._filters:
-                if not isinstance(flt, Filter):
-                    raise AttributeError("Did not receive a Filter object.")
-                args += flt.args
-        if self._with_payloads:
-            args.append("WITHPAYLOADS")
-        if self._scorer:
-            args += ["SCORER", self._scorer]
-        if self._with_scores:
-            args.append("WITHSCORES")
-        if self._ids:
-            args.append("INKEYS")
-            args.append(len(self._ids))
-            args += self._ids
-        if self._slop >= 0:
-            args += ["SLOP", self._slop]
-        if self._timeout is not None:
-            args += ["TIMEOUT", self._timeout]
-        if self._in_order:
-            args.append("INORDER")
-        if self._return_fields:
-            args.append("RETURN")
-            args.append(len(self._return_fields))
-            args += self._return_fields
-        if self._sortby:
-            if not isinstance(self._sortby, SortbyField):
-                raise AttributeError("Did not receive a SortByField.")
-            args.append("SORTBY")
-            args += self._sortby.args
-        if self._language:
-            args += ["LANGUAGE", self._language]
-        if self._expander:
-            args += ["EXPANDER", self._expander]
-        if self._dialect:
-            args += ["DIALECT", self._dialect]
-
-        return args
+        pass
 
     def paging(self, offset: int, num: int) -> "Query":
         """
@@ -253,21 +171,17 @@ class Query:
         - **offset**: Paging offset for the results. Defaults to 0
         - **num**: How many results do we want
         """
-        self._offset = offset
-        self._num = num
-        return self
+        pass
 
     def verbatim(self) -> "Query":
         """Set the query to be verbatim, i.e., use no query expansion
         or stemming.
         """
-        self._verbatim = True
-        return self
+        pass
 
     def no_content(self) -> "Query":
         """Set the query to only return ids and not the document content."""
-        self._no_content = True
-        return self
+        pass
 
     def no_stopwords(self) -> "Query":
         """
@@ -275,18 +189,15 @@ class Query:
         Only useful in very big queries that you are certain contain
         no stopwords.
         """
-        self._no_stopwords = True
-        return self
+        pass
 
     def with_payloads(self) -> "Query":
         """Ask the engine to return document payloads."""
-        self._with_payloads = True
-        return self
+        pass
 
     def with_scores(self) -> "Query":
         """Ask the engine to return document search scores."""
-        self._with_scores = True
-        return self
+        pass
 
     def limit_fields(self, *fields: str) -> "Query":
         """
@@ -295,8 +206,7 @@ class Query:
         - **fields**: Each element should be a string, case sensitive field name
         from the defined schema.
         """
-        self._fields = list(fields)
-        return self
+        pass
 
     def add_filter(self, flt: "Filter") -> "Query":
         """
@@ -306,9 +216,7 @@ class Query:
         - **flt**: A NumericFilter or GeoFilter object, used on a
         corresponding field
         """
-
-        self._filters.append(flt)
-        return self
+        pass
 
     def sort_by(self, field: str, asc: bool = True) -> "Query":
         """
@@ -317,8 +225,7 @@ class Query:
         - **field** - the name of the field to sort by
         - **asc** - when `True`, sorting will be done in ascending order
         """
-        self._sortby = SortbyField(field, asc)
-        return self
+        pass
 
     def expander(self, expander: str) -> "Query":
         """
@@ -326,8 +233,7 @@ class Query:
 
         - **expander** - the name of the expander
         """
-        self._expander = expander
-        return self
+        pass
 
     def dialect(self, dialect: int) -> "Query":
         """
@@ -335,8 +241,7 @@ class Query:
 
         - **dialect** - dialect version to execute the query under
         """
-        self._dialect = dialect
-        return self
+        pass
 
 
 class Filter:

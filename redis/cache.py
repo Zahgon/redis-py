@@ -167,28 +167,22 @@ class DefaultCache(CacheInterface):
 
     @property
     def collection(self) -> OrderedDict:
-        return self._cache
+        pass
 
     @property
     def config(self) -> CacheConfigurationInterface:
-        return self._cache_config
+        pass
 
     @property
     def eviction_policy(self) -> EvictionPolicyInterface:
-        return self._eviction_policy
+        pass
 
     @property
     def size(self) -> int:
-        return len(self._cache)
+        pass
 
     def set(self, entry: CacheEntry) -> bool:
-        if not self.is_cachable(entry.cache_key):
-            return False
-
-        self._cache[entry.cache_key] = entry
-        self._eviction_policy.touch(entry.cache_key)
-
-        return True
+        pass
 
     def get(self, key: CacheKey) -> Union[CacheEntry, None]:
         entry = self._cache.get(key, None)
@@ -214,29 +208,7 @@ class DefaultCache(CacheInterface):
     def delete_by_redis_keys(
         self, redis_keys: Union[List[bytes], List[str]]
     ) -> List[bool]:
-        response = []
-        keys_to_delete = []
-
-        for redis_key in redis_keys:
-            # Prepare both versions for lookup
-            candidates = [redis_key]
-            if isinstance(redis_key, str):
-                candidates.append(redis_key.encode("utf-8"))
-            elif isinstance(redis_key, bytes):
-                try:
-                    candidates.append(redis_key.decode("utf-8"))
-                except UnicodeDecodeError:
-                    pass  # Non-UTF-8 bytes, skip str version
-
-            for cache_key in self._cache:
-                if any(candidate in cache_key.redis_keys for candidate in candidates):
-                    keys_to_delete.append(cache_key)
-                    response.append(True)
-
-        for key in keys_to_delete:
-            self._cache.pop(key)
-
-        return response
+        pass
 
     def flush(self) -> int:
         elem_count = len(self._cache)
@@ -257,43 +229,31 @@ class CacheProxy(CacheInterface):
 
     @property
     def collection(self) -> OrderedDict:
-        return self._cache.collection
+        pass
 
     @property
     def config(self) -> CacheConfigurationInterface:
-        return self._cache.config
+        pass
 
     @property
     def eviction_policy(self) -> EvictionPolicyInterface:
-        return self._cache.eviction_policy
+        pass
 
     @property
     def size(self) -> int:
-        return self._cache.size
+        pass
 
     def get(self, key: CacheKey) -> Union[CacheEntry, None]:
         return self._cache.get(key)
 
     def set(self, entry: CacheEntry) -> bool:
-        is_set = self._cache.set(entry)
-
-        if self.config.is_exceeds_max_size(self.size):
-            # Lazy import to avoid circular dependency
-            from redis.observability.recorder import record_csc_eviction
-
-            record_csc_eviction(
-                count=1,
-                reason=CSCReason.FULL,
-            )
-            self.eviction_policy.evict_next()
-
-        return is_set
+        pass
 
     def delete_by_cache_keys(self, cache_keys: List[CacheKey]) -> List[bool]:
         return self._cache.delete_by_cache_keys(cache_keys)
 
     def delete_by_redis_keys(self, redis_keys: List[bytes]) -> List[bool]:
-        return self._cache.delete_by_redis_keys(redis_keys)
+        pass
 
     def flush(self) -> int:
         return self._cache.flush()
@@ -308,33 +268,21 @@ class LRUPolicy(EvictionPolicyInterface):
 
     @property
     def cache(self):
-        return self._cache
+        pass
 
     @cache.setter
     def cache(self, cache: CacheInterface):
-        self._cache = cache
+        pass
 
     @property
     def type(self) -> EvictionPolicyType:
-        return EvictionPolicyType.time_based
+        pass
 
     def evict_next(self) -> CacheKey:
-        self._assert_cache()
-        popped_entry = self._cache.collection.popitem(last=False)
-        return popped_entry[0]
+        pass
 
     def evict_many(self, count: int) -> List[CacheKey]:
-        self._assert_cache()
-        if count > len(self._cache.collection):
-            raise ValueError("Evictions count is above cache size")
-
-        popped_keys = []
-
-        for _ in range(count):
-            popped_entry = self._cache.collection.popitem(last=False)
-            popped_keys.append(popped_entry[0])
-
-        return popped_keys
+        pass
 
     def touch(self, cache_key: CacheKey) -> None:
         self._assert_cache()
@@ -446,16 +394,16 @@ class CacheConfig(CacheConfigurationInterface):
         self._eviction_policy = eviction_policy
 
     def get_cache_class(self):
-        return self._cache_class
+        pass
 
     def get_max_size(self) -> int:
-        return self._max_size
+        pass
 
     def get_eviction_policy(self) -> EvictionPolicy:
-        return self._eviction_policy
+        pass
 
     def is_exceeds_max_size(self, count: int) -> bool:
-        return count > self._max_size
+        pass
 
     def is_allowed_to_cache(self, command: str) -> bool:
         return command in self.DEFAULT_ALLOW_LIST
@@ -475,5 +423,4 @@ class CacheFactory(CacheFactoryInterface):
             self._config = CacheConfig()
 
     def get_cache(self) -> CacheInterface:
-        cache_class = self._config.get_cache_class()
-        return CacheProxy(cache_class(cache_config=self._config))
+        pass

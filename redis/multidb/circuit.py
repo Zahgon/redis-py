@@ -71,19 +71,19 @@ class BaseCircuitBreaker(CircuitBreaker):
 
     @property
     def grace_period(self) -> float:
-        return self._cb.reset_timeout
+        pass
 
     @grace_period.setter
     def grace_period(self, grace_period: float):
-        self._cb.reset_timeout = grace_period
+        pass
 
     @property
     def state(self) -> State:
-        return State(value=self._cb.state.name)
+        pass
 
     @state.setter
     def state(self, state: State):
-        self._state_pb_mapper[state]()
+        pass
 
     @property
     def database(self):
@@ -119,11 +119,7 @@ class PBListener(pybreaker.CircuitBreakerListener):
         self._database = database
 
     def state_change(self, cb, old_state, new_state):
-        cb = PBCircuitBreakerAdapter(cb)
-        cb.database = self._database
-        old_state = State(value=old_state.name)
-        new_state = State(value=new_state.name)
-        self._cb(cb, old_state, new_state)
+        pass
 
 
 class PBCircuitBreakerAdapter(BaseCircuitBreaker):

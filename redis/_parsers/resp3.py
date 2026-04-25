@@ -24,9 +24,7 @@ class _RESP3Parser(_RESPBase, PushNotificationsParser):
         self.invalidation_push_handler_func = None
 
     def handle_pubsub_push_response(self, response):
-        logger = getLogger("push_response")
-        logger.debug("Push response: " + str(response))
-        return response
+        pass
 
     def read_response(
         self,
@@ -169,9 +167,7 @@ class _AsyncRESP3Parser(_AsyncRESPBase, AsyncPushNotificationsParser):
         self.invalidation_push_handler_func = None
 
     async def handle_pubsub_push_response(self, response):
-        logger = getLogger("push_response")
-        logger.debug("Push response: " + str(response))
-        return response
+        pass
 
     async def read_response(
         self, disable_decoding: bool = False, push_request: bool = False

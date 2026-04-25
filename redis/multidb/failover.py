@@ -66,7 +66,7 @@ class WeightBasedFailoverStrategy(FailoverStrategy):
         raise NoValidDatabaseException("No valid database available for communication")
 
     def set_databases(self, databases: Databases) -> None:
-        self._databases = databases
+        pass
 
 
 class DefaultFailoverStrategyExecutor(FailoverStrategyExecutor):
@@ -88,15 +88,15 @@ class DefaultFailoverStrategyExecutor(FailoverStrategyExecutor):
 
     @property
     def failover_attempts(self) -> int:
-        return self._failover_attempts
+        pass
 
     @property
     def failover_delay(self) -> float:
-        return self._failover_delay
+        pass
 
     @property
     def strategy(self) -> FailoverStrategy:
-        return self._strategy
+        pass
 
     def execute(self) -> SyncDatabase:
         try:

@@ -76,7 +76,7 @@ class CommandFailureDetector(FailureDetector):
             self._check_threshold()
 
     def set_command_executor(self, command_executor) -> None:
-        self._command_executor = command_executor
+        pass
 
     def register_command_execution(self, cmd: tuple) -> None:
         with self._lock:
